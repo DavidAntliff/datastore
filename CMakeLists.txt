@@ -8,6 +8,9 @@ project(datastore)
 enable_testing()
 add_subdirectory(googletest)
 
+set(CMAKE_C_FLAGS "-std=c99")
+set(CMAKE_BUILD_TYPE=Debug)
+
 include_directories(${CMAKE_SOURCE_DIR}/googletest/include)
 add_executable(test_datastore datastore.c test_datastore.cpp)
 target_link_libraries(test_datastore gtest_main gtest pthread bsd)

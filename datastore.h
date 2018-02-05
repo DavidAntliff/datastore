@@ -104,15 +104,17 @@ typedef enum
 #define DATASTORE_LEN_WIFI_PASSWORD    64 //(sizeof(((wifi_sta_config_t *)0)->password))
 #define DATASTORE_LEN_MQTT_BROKER_ADDRESS 64
 
+// TODO: rename to DATASTORE_STATUS_...
 typedef enum
 {
     DATASTORE_ERROR_UNKNOWN = -1,
     DATASTORE_OK = 0,
+	DATASTORE_ERROR_OUT_OF_MEMORY,    // a memory allocation failed
     DATASTORE_ERROR_NULL_POINTER,     // a parameter or variable is NULL
-    DATASTORE_ERROR_NOT_INITIALISED,  // the datastore is not initialised
+    DATASTORE_ERROR_NOT_INITIALISED,  // the datastore is not initialised  // TODO REMOVE with V2
     DATASTORE_ERROR_INVALID_TYPE,     // a type is incorrect or not handled
-    DATASTORE_ERROR_INVALID_ID,
-    DATASTORE_ERROR_INVALID_INSTANCE,
+    DATASTORE_ERROR_INVALID_ID,       // a resource ID is invalid
+    DATASTORE_ERROR_INVALID_INSTANCE, // an instance, or number of instances is invalid
 } datastore_error_t;
 
 typedef enum
@@ -138,12 +140,27 @@ typedef enum
     DATASTORE_TEMP_ASSIGNMENT_T5,
 } datastore_temp_assignment_t;
 
+typedef enum
+{
+    DATASTORE_TYPE_INVALID = -1,
+    DATASTORE_TYPE_BOOL,
+    DATASTORE_TYPE_UINT8,
+    DATASTORE_TYPE_UINT32,
+    DATASTORE_TYPE_INT8,
+    DATASTORE_TYPE_INT32,
+    DATASTORE_TYPE_FLOAT,
+    DATASTORE_TYPE_DOUBLE,
+    DATASTORE_TYPE_STRING,
+    DATASTORE_TYPE_LAST,
+} datastore_type_t;
+
 typedef struct
 {
     void * private_data;
 } datastore_t;
 
 typedef uint8_t instance_id_t;
+typedef uint32_t datastore2_instance_id_t;
 
 // allocate, initialise and free datastore
 datastore_t * datastore_malloc(void);
@@ -176,6 +193,39 @@ datastore_error_t datastore_toggle(datastore_t * store, datastore_id_t id, insta
 datastore_error_t datastore_increment(datastore_t * store, datastore_id_t id, instance_id_t instance);
 
 datastore_error_t datastore_dump(const datastore_t * store);
+
+
+// NEW API
+typedef struct
+{
+	void * private_data;
+} datastore2_t;
+
+typedef int32_t datastore2_resource_id_t;
+
+datastore2_t * datastore2_create(void);
+void datastore2_free(datastore2_t ** datastore);
+
+datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances);
+
+datastore_error_t datastore2_set_bool(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, bool value);
+datastore_error_t datastore2_set_uint8(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint8_t value);
+datastore_error_t datastore2_set_uint32(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint32_t value);
+datastore_error_t datastore2_set_int8(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, int8_t value);
+datastore_error_t datastore2_set_int32(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, int32_t value);
+datastore_error_t datastore2_set_float(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, float value);
+datastore_error_t datastore2_set_double(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, double value);
+datastore_error_t datastore2_set_string(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, const char * value);
+
+datastore_error_t datastore2_get_bool(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, bool * value);
+datastore_error_t datastore2_get_uint8(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint8_t * value);
+datastore_error_t datastore2_get_uint32(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint32_t * value);
+datastore_error_t datastore2_get_int8(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, int8_t * value);
+datastore_error_t datastore2_get_int32(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, int32_t * value);
+datastore_error_t datastore2_get_float(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, float * value);
+datastore_error_t datastore2_get_double(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, double * value);
+datastore_error_t datastore2_get_string(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, char * value);
+
 
 #ifdef __cplusplus
 }
