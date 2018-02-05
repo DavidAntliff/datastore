@@ -23,7 +23,9 @@
  */
 
 #include <string.h>
-#include <bsd/string.h>   // libbsd-dev
+#ifndef __APPLE__
+#  include <bsd/string.h>   // libbsd-dev
+#endif
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -866,8 +868,8 @@ typedef struct
 } private2_t;
 
 #define _error(f, ...) do { fprintf(stdout /*stderr*/, f"\n", ##__VA_ARGS__); } while (0)
-//#define _debug(f, ...)
-#define _debug(f, ...) do { fprintf(stdout, f"\n", ##__VA_ARGS__); } while (0)
+#define _debug(f, ...)
+//#define _debug(f, ...) do { fprintf(stdout, f"\n", ##__VA_ARGS__); } while (0)
 
 datastore2_t * datastore2_create(void)
 {

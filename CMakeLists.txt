@@ -11,8 +11,14 @@ add_subdirectory(googletest)
 set(CMAKE_C_FLAGS "-std=c99")
 set(CMAKE_BUILD_TYPE=Debug)
 
+set(LIBS gtest_main gtest pthread)
+if(NOT APPLE)
+  list(APPEND LIBS bsd)
+endif()
+
 include_directories(${CMAKE_SOURCE_DIR}/googletest/include)
 add_executable(test_datastore datastore.c test_datastore.cpp)
-target_link_libraries(test_datastore gtest_main gtest pthread bsd)
+#target_link_libraries(test_datastore gtest_main gtest pthread bsd)
+target_link_libraries(test_datastore ${LIBS})
 #target_link_libraries(test_datastore ${GTEST_LIBRARIES} pthread)
 
