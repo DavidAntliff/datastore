@@ -207,7 +207,20 @@ typedef int32_t datastore2_resource_id_t;
 datastore2_t * datastore2_create(void);
 void datastore2_free(datastore2_t ** datastore);
 
-datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances);
+typedef struct
+{
+    void * data;
+    size_t size;
+    datastore_type_t type;
+    uint32_t num_instances;
+    bool _managed;
+} datastore_resource_t;
+
+datastore_resource_t datastore2_create_resource(datastore_type_t type, uint32_t num_instances);
+datastore_resource_t datastore2_create_string_resource(size_t length, uint32_t num_instances);
+datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, const datastore_resource_t resource);
+
+datastore_error_t datastore2_add_fixed_length_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances);
 datastore_error_t datastore2_add_string_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, uint32_t num_instances, size_t length);
 
 datastore_error_t datastore2_set_bool(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, bool value);

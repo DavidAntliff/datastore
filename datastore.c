@@ -859,6 +859,7 @@ typedef struct
     datastore2_instance_id_t num_instances;
     void * data;   // pointer to first byte of first instance
     size_t size;   // per instance size
+    bool managed;  // data allocation is managed by API
 } index_row_t;
 
 typedef struct
@@ -914,7 +915,10 @@ void datastore2_free(datastore2_t ** datastore)
             for (size_t i = 0; i < private->index_size / sizeof(index_row_t); ++i)
             {
                 // rely on null initialisation of index rows
-                free(private->index_rows[i].data);
+                if (private->index_rows[i].managed)
+                {
+                    free(private->index_rows[i].data);
+                }
                 private->index_rows[i].data = NULL;
             }
             free(private->index_rows);
@@ -948,7 +952,7 @@ uint8_t TYPE_SIZES[DATASTORE_TYPE_LAST] = {
 
 // TODO: check strings are pooled
 
-static datastore_error_t _add_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances, void * data, size_t size)
+static datastore_error_t _add_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances, void * data, size_t size, bool managed)
 {
     datastore_error_t err = DATASTORE_ERROR_UNKNOWN;
     if (datastore != NULL)
@@ -1006,6 +1010,7 @@ static datastore_error_t _add_resource(datastore2_t * datastore, datastore2_reso
                             private->index_rows[resource_id].num_instances = num_instances;
                             private->index_rows[resource_id].size = size;
                             private->index_rows[resource_id].type = type;
+                            private->index_rows[resource_id].managed = managed;
 
                             err = DATASTORE_OK;
                         }
@@ -1048,7 +1053,61 @@ out:
     return err;
 }
 
-datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances)
+datastore_resource_t datastore2_create_resource(datastore_type_t type, uint32_t num_instances)
+{
+    datastore_resource_t resource = { 0 };
+    if (type >= 0 && type < DATASTORE_TYPE_LAST && type != DATASTORE_TYPE_STRING)
+    {
+        size_t size = TYPE_SIZES[type];
+        void * data = malloc(size * num_instances);
+        if (data != NULL)
+        {
+            memset(data, 0, size * num_instances);
+            resource.data = data;
+            resource.size = size;  // per instance size
+            resource.num_instances = num_instances;
+            resource.type = type;
+            resource._managed = true;
+        }
+        else
+        {
+            _error("malloc returned NULL");
+        }
+    }
+    else
+    {
+        _error("resource type %d is invalid", type);
+    }
+    return resource;
+}
+
+datastore_resource_t datastore2_create_string_resource(size_t length, uint32_t num_instances)
+{
+    datastore_resource_t resource = { 0 };
+    size_t size = length;
+    void * data = malloc(size * num_instances);
+    if (data != NULL)
+    {
+        memset(data, 0, size * num_instances);
+        resource.data = data;
+        resource.size = size;  // per instance size
+        resource.num_instances = num_instances;
+        resource.type = DATASTORE_TYPE_STRING;
+        resource._managed = true;
+    }
+    else
+    {
+        _error("malloc returned NULL");
+    }
+    return resource;
+}
+
+datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, const datastore_resource_t resource)
+{
+    return _add_resource(datastore, resource_id, resource.type, resource.num_instances, resource.data, resource.size, resource._managed);
+}
+
+datastore_error_t datastore2_add_fixed_length_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances)
 {
     datastore_error_t err = DATASTORE_ERROR_UNKNOWN;
     size_t size = TYPE_SIZES[type];
@@ -1058,7 +1117,7 @@ datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_r
         if (data != NULL)
         {
             memset(data, 0, size * num_instances);
-            err = _add_resource(datastore, resource_id, type, num_instances, data, size);
+            err = _add_resource(datastore, resource_id, type, num_instances, data, size, true);
             if (err != DATASTORE_OK)
             {
                 free(data);
@@ -1087,7 +1146,7 @@ datastore_error_t datastore2_add_string_resource(datastore2_t * datastore, datas
     if (data != NULL)
     {
         memset(data, 0, size * num_instances);
-        err = _add_resource(datastore, resource_id, DATASTORE_TYPE_STRING, num_instances, data, size);
+        err = _add_resource(datastore, resource_id, DATASTORE_TYPE_STRING, num_instances, data, size, true);
         if (err != DATASTORE_OK)
         {
             free(data);
