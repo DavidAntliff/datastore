@@ -115,6 +115,7 @@ typedef enum
     DATASTORE_ERROR_INVALID_TYPE,     // a type is incorrect or not handled
     DATASTORE_ERROR_INVALID_ID,       // a resource ID is invalid
     DATASTORE_ERROR_INVALID_INSTANCE, // an instance, or number of instances is invalid
+    DATASTORE_ERROR_TOO_LARGE,        // data is too large for allocated space
 } datastore_error_t;
 
 typedef enum
@@ -207,6 +208,7 @@ datastore2_t * datastore2_create(void);
 void datastore2_free(datastore2_t ** datastore);
 
 datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances);
+datastore_error_t datastore2_add_string_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, uint32_t num_instances, size_t length);
 
 datastore_error_t datastore2_set_bool(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, bool value);
 datastore_error_t datastore2_set_uint8(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint8_t value);

@@ -948,7 +948,7 @@ uint8_t TYPE_SIZES[DATASTORE_TYPE_LAST] = {
 
 // TODO: check strings are pooled
 
-datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances)
+static datastore_error_t _add_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances, void * data, size_t size)
 {
     datastore_error_t err = DATASTORE_ERROR_UNKNOWN;
     if (datastore != NULL)
@@ -958,16 +958,12 @@ datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_r
         {
             if (resource_id >= 0)
             {
-                if (type >= 0 && type < DATASTORE_TYPE_LAST && type != DATASTORE_TYPE_STRING)
+                if (type >= 0 && type < DATASTORE_TYPE_LAST)
                 {
                     if (num_instances > 0)
                     {
-                        size_t size = TYPE_SIZES[type];
-                        void * data = malloc(size * num_instances);
                         if (data != NULL)
                         {
-                            memset(data, 0, size * num_instances);
-
                             size_t rows_in_index = private->index_size / sizeof(index_row_t);
                             if (resource_id >= rows_in_index)
                             {
@@ -1016,7 +1012,7 @@ datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_r
                         else
                         {
                             err = DATASTORE_ERROR_NULL_POINTER;
-                            _error("malloc returned NULL");
+                            _error("data is NULL");
                         }
                     }
                     else
@@ -1048,13 +1044,67 @@ datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_r
         err = DATASTORE_ERROR_NULL_POINTER;
         _error("datastore is NULL");
     }
-    out:
+out:
     return err;
 }
 
-static datastore_error_t _set_value2(const datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, const void * value, datastore_type_t expected_type)
+datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances)
 {
-    _debug("_set_value2: id %d, instance %d, value %p, expected_type %d", id, instance, value, expected_type);
+    datastore_error_t err = DATASTORE_ERROR_UNKNOWN;
+    size_t size = TYPE_SIZES[type];
+    if (type != DATASTORE_TYPE_STRING)
+    {
+        void * data = malloc(size * num_instances);
+        if (data != NULL)
+        {
+            memset(data, 0, size * num_instances);
+            err = _add_resource(datastore, resource_id, type, num_instances, data, size);
+            if (err != DATASTORE_OK)
+            {
+                free(data);
+                data = NULL;
+            }
+        }
+        else
+        {
+            err = DATASTORE_ERROR_NULL_POINTER;
+            _error("malloc returned NULL");
+        }
+    }
+    else
+    {
+        err = DATASTORE_ERROR_INVALID_TYPE;
+        _error("resource type %d is invalid", type);
+    }
+    return err;
+}
+
+datastore_error_t datastore2_add_string_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, uint32_t num_instances, size_t length)
+{
+    datastore_error_t err = DATASTORE_ERROR_UNKNOWN;
+    size_t size = length;
+    void * data = malloc(size * num_instances);
+    if (data != NULL)
+    {
+        memset(data, 0, size * num_instances);
+        err = _add_resource(datastore, resource_id, DATASTORE_TYPE_STRING, num_instances, data, size);
+        if (err != DATASTORE_OK)
+        {
+            free(data);
+            data = NULL;
+        }
+    }
+    else
+    {
+        err = DATASTORE_ERROR_NULL_POINTER;
+        _error("malloc returned NULL");
+    }
+    return err;
+}
+
+static datastore_error_t _set_value2(const datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, const void * value, size_t size, datastore_type_t expected_type)
+{
+    _debug("_set_value2: id %d, instance %d, value %p, size %d, expected_type %d", id, instance, value, size, expected_type);
     datastore_error_t err = DATASTORE_ERROR_UNKNOWN;
     if (datastore != NULL)
     {
@@ -1069,25 +1119,33 @@ static datastore_error_t _set_value2(const datastore2_t * datastore, datastore2_
                     // check instance
                     if (/*instance >= 0 &&*/ instance < private->index_rows[id].num_instances)
                     {
-                        if (value)
+                        if (size <= private->index_rows[id].size)
                         {
-                            // finally, set the value
-                            uint8_t * pdest = (uint8_t *)private->index_rows[id].data + instance * private->index_rows[id].size;
-                            _debug("_set_value2: id %d, instance %d, value %p, type %d, data %p, size 0x%lx, pdest %p",
-                                   id, instance, value, private->index_rows[id].type, private->index_rows[id].data, private->index_rows[id].size, pdest);
+                            if (value != NULL)
+                            {
+                                // finally, set the value
+                                uint8_t * pdest = (uint8_t *)private->index_rows[id].data + instance * private->index_rows[id].size;
+                                _debug("_set_value2: id %d, instance %d, value %p, type %d, data %p, size 0x%lx, pdest %p",
+                                       id, instance, value, private->index_rows[id].type, private->index_rows[id].data, private->index_rows[id].size, pdest);
 
-                            xSemaphoreTake(private->semaphore, portMAX_DELAY);
-                            _set_handler((uint8_t *)value, pdest, private->index_rows[id].size);
-                            ESP_LOG_BUFFER_HEXDUMP(TAG, pdest, private->index_rows[id].size, ESP_LOG_DEBUG);
-                            xSemaphoreGive(private->semaphore);
+                                xSemaphoreTake(private->semaphore, portMAX_DELAY);
+                                _set_handler((uint8_t *)value, pdest, private->index_rows[id].size);
+                                ESP_LOG_BUFFER_HEXDUMP(TAG, pdest, private->index_rows[id].size, ESP_LOG_DEBUG);
+                                xSemaphoreGive(private->semaphore);
 
-                            // TODO: call any registered callbacks with new value
-                            err = DATASTORE_OK;
+                                // TODO: call any registered callbacks with new value
+                                err = DATASTORE_OK;
+                            }
+                            else
+                            {
+                                _error("_set_value2: value is NULL");
+                                err = DATASTORE_ERROR_NULL_POINTER;
+                            }
                         }
                         else
                         {
-                            _error("_set_value2: value is NULL");
-                            err = DATASTORE_ERROR_NULL_POINTER;
+                            _error("_set_value2: value size %lu exceeds allocated size %lu", size, private->index_rows[id].size);
+                            err = DATASTORE_ERROR_TOO_LARGE;
                         }
                     }
                     else
@@ -1124,42 +1182,42 @@ static datastore_error_t _set_value2(const datastore2_t * datastore, datastore2_
 
 datastore_error_t datastore2_set_bool(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, bool value)
 {
-    return _set_value2(datastore, id, instance, &value, DATASTORE_TYPE_BOOL);
+    return _set_value2(datastore, id, instance, &value, sizeof(bool), DATASTORE_TYPE_BOOL);
 }
 
 datastore_error_t datastore2_set_uint8(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint8_t value)
 {
-    return _set_value2(datastore, id, instance, &value, DATASTORE_TYPE_UINT8);
+    return _set_value2(datastore, id, instance, &value, sizeof(uint8_t), DATASTORE_TYPE_UINT8);
 }
 
 datastore_error_t datastore2_set_uint32(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint32_t value)
 {
-    return _set_value2(datastore, id, instance, &value, DATASTORE_TYPE_UINT32);
+    return _set_value2(datastore, id, instance, &value, sizeof(uint32_t), DATASTORE_TYPE_UINT32);
 }
 
 datastore_error_t datastore2_set_int8(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, int8_t value)
 {
-    return _set_value2(datastore, id, instance, &value, DATASTORE_TYPE_INT8);
+    return _set_value2(datastore, id, instance, &value, sizeof(int8_t), DATASTORE_TYPE_INT8);
 }
 
 datastore_error_t datastore2_set_int32(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, int32_t value)
 {
-    return _set_value2(datastore, id, instance, &value, DATASTORE_TYPE_INT32);
+    return _set_value2(datastore, id, instance, &value, sizeof(int32_t), DATASTORE_TYPE_INT32);
 }
 
 datastore_error_t datastore2_set_float(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, float value)
 {
-    return _set_value2(datastore, id, instance, &value, DATASTORE_TYPE_FLOAT);
+    return _set_value2(datastore, id, instance, &value, sizeof(float), DATASTORE_TYPE_FLOAT);
 }
 
 datastore_error_t datastore2_set_double(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, double value)
 {
-    return _set_value2(datastore, id, instance, &value, DATASTORE_TYPE_DOUBLE);
+    return _set_value2(datastore, id, instance, &value, sizeof(double), DATASTORE_TYPE_DOUBLE);
 }
 
 datastore_error_t datastore2_set_string(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, const char * value)
 {
-    return _set_value2(datastore, id, instance, value, DATASTORE_TYPE_STRING);
+    return _set_value2(datastore, id, instance, value, strlen(value) + 1, DATASTORE_TYPE_STRING);
 }
 
 static datastore_error_t _get_value2(const datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, void * value, datastore_type_t expected_type)

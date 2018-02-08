@@ -41,9 +41,23 @@ TEST(Datastore2Test, add_managed_scalar_uint32) {
     datastore2_free(&ds);
 }
 
+TEST(Datastore2Test, add_managed_scalar_string) {
+    datastore2_t * ds = datastore2_create();
+    const uint32_t STRING_LEN = 32;
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_string_resource(ds, RESOURCE0, 1, STRING_LEN));
+    datastore2_free(&ds);
+}
+
 TEST(Datastore2Test, add_managed_tabular_uint32) {
 	datastore2_t * ds = datastore2_create();
 	EXPECT_EQ(DATASTORE_OK, datastore2_add_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1000));
+    datastore2_free(&ds);
+}
+
+TEST(Datastore2Test, add_managed_tabular_string) {
+    datastore2_t * ds = datastore2_create();
+    const uint32_t STRING_LEN = 32;
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_string_resource(ds, RESOURCE0, 100, STRING_LEN));
     datastore2_free(&ds);
 }
 
@@ -307,6 +321,37 @@ TEST(Datastore2Test, test_scalar_double) {
     datastore2_free(&ds);
 }
 
+TEST(Datastore2Test, test_scalar_string) {
+    datastore2_t * ds = datastore2_create();
+    const datastore2_resource_id_t ID = 42;
+    const uint32_t STRING_LEN = 8;  // inc. 1 for null terminator
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_string_resource(ds, ID, 1, STRING_LEN));
+    char value[STRING_LEN] = "";
+    EXPECT_EQ(DATASTORE_OK, datastore2_get_string(ds, ID, 0, value));
+    EXPECT_STREQ("", value);
+    EXPECT_EQ(DATASTORE_OK, datastore2_set_string(ds, ID, 0, "abcdefg"));
+    EXPECT_EQ(DATASTORE_OK, datastore2_get_string(ds, ID, 0, value));
+    EXPECT_STREQ("abcdefg", value);
+    EXPECT_EQ(DATASTORE_OK, datastore2_set_string(ds, ID, 0, ""));
+    EXPECT_EQ(DATASTORE_OK, datastore2_get_string(ds, ID, 0, value));
+    EXPECT_STREQ("", value);
+    EXPECT_EQ(DATASTORE_OK, datastore2_set_string(ds, ID, 0, "1234567"));
+    EXPECT_EQ(DATASTORE_OK, datastore2_get_string(ds, ID, 0, value));
+    EXPECT_STREQ("1234567", value);
+    datastore2_free(&ds);
+}
+
+TEST(Datastore2Test, test_scalar_string_exceeds_allocated_length) {
+    datastore2_t * ds = datastore2_create();
+    const datastore2_resource_id_t ID = 4;
+    const uint32_t STRING_LEN = 8;  // inc. 1 for null terminator
+    char value[STRING_LEN] = "";
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_string_resource(ds, ID, 1, STRING_LEN));
+    EXPECT_EQ(DATASTORE_ERROR_TOO_LARGE, datastore2_set_string(ds, ID, 0, "abcdefghijkl"));
+    EXPECT_STREQ("", value);
+    datastore2_free(&ds);
+}
+
 TEST(Datastore2Test, test_tabular_bool) {
 	datastore2_t * ds = datastore2_create();
 	const datastore2_resource_id_t ID = 199;
@@ -485,6 +530,56 @@ TEST(Datastore2Test, test_tabular_double) {
         double value = 0.0;
         EXPECT_EQ(DATASTORE_OK, datastore2_get_double(ds, ID, i, &value));
         EXPECT_EQ(67.91f * i * i + 135.67f * i - 953.213f, value);
+    }
+    datastore2_free(&ds);
+}
+
+TEST(Datastore2Test, test_tabular_string) {
+    datastore2_t * ds = datastore2_create();
+    const datastore2_resource_id_t ID = 5432;
+    const uint32_t NUM_INSTANCES = 21;
+    const uint32_t STRING_LEN = 8;  // inc. 1 for null terminator
+    char value[STRING_LEN] = "";
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_string_resource(ds, ID, NUM_INSTANCES, STRING_LEN));
+
+    // check defaults
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        memset(value, 0, STRING_LEN);
+        EXPECT_EQ(DATASTORE_OK, datastore2_get_string(ds, ID, i, value));
+        EXPECT_STREQ("", value);
+    }
+
+    // set all to predictable values
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        char s[STRING_LEN] = "";
+        snprintf(s, STRING_LEN, "abc-%03d", i);
+        EXPECT_EQ(DATASTORE_OK, datastore2_set_string(ds, ID, i, s));
+    }
+
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        memset(value, 0, STRING_LEN);
+        EXPECT_EQ(DATASTORE_OK, datastore2_get_string(ds, ID, i, value));
+        char s[STRING_LEN] = "";
+        snprintf(s, STRING_LEN, "abc-%03d", i);
+        EXPECT_STREQ(s, value);
+    }
+    datastore2_free(&ds);
+}
+
+TEST(Datastore2Test, test_tabular_string_exceeds_allocated_length) {
+    datastore2_t * ds = datastore2_create();
+    const datastore2_resource_id_t ID = 43;
+    const uint32_t NUM_INSTANCES = 54;
+    const uint32_t STRING_LEN = 64;  // inc. 1 for null terminator
+    char value[STRING_LEN] = "";
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_string_resource(ds, ID, NUM_INSTANCES, STRING_LEN));
+
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        char * s = (char *)malloc(STRING_LEN + 1 + i);
+        memset(s, 'A', STRING_LEN + i);
+        s[STRING_LEN + i] = '\0';
+        EXPECT_EQ(DATASTORE_ERROR_TOO_LARGE, datastore2_set_string(ds, ID, i, s));
+        free(s);
     }
     datastore2_free(&ds);
 }
