@@ -385,3 +385,106 @@ TEST(Datastore2Test, test_tabular_uint32) {
     datastore2_free(&ds);
 }
 
+TEST(Datastore2Test, test_tabular_int8) {
+    datastore2_t * ds = datastore2_create();
+    const datastore2_resource_id_t ID = 55;
+    const int32_t NUM_INSTANCES = 1000;
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_resource(ds, ID, DATASTORE_TYPE_INT8, NUM_INSTANCES));
+
+    // check defaults
+    for (int32_t i = 0; i < NUM_INSTANCES; ++i) {
+        int8_t value = 0;
+        EXPECT_EQ(DATASTORE_OK, datastore2_get_int8(ds, ID, i, &value));
+        EXPECT_FALSE(value);
+    }
+
+    // set all to predictable values
+    for (int32_t i = 0; i < NUM_INSTANCES; ++i) {
+        EXPECT_EQ(DATASTORE_OK, datastore2_set_int8(ds, ID, i, i * i + 3 * i - 7));
+    }
+
+    for (int32_t i = 0; i < NUM_INSTANCES; ++i) {
+        int8_t value = 0;
+        EXPECT_EQ(DATASTORE_OK, datastore2_get_int8(ds, ID, i, &value));
+        EXPECT_EQ((int8_t)(i * i + 3 * i - 7), value);
+    }
+    datastore2_free(&ds);
+}
+
+TEST(Datastore2Test, test_tabular_int32) {
+    datastore2_t * ds = datastore2_create();
+    const datastore2_resource_id_t ID = 55;
+    const int32_t NUM_INSTANCES = 1000;
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_resource(ds, ID, DATASTORE_TYPE_INT32, NUM_INSTANCES));
+
+    // check defaults
+    for (int32_t i = 0; i < NUM_INSTANCES; ++i) {
+        int32_t value = 0;
+        EXPECT_EQ(DATASTORE_OK, datastore2_get_int32(ds, ID, i, &value));
+        EXPECT_FALSE(value);
+    }
+
+    // set all to predictable values
+    for (int32_t i = 0; i < NUM_INSTANCES; ++i) {
+        EXPECT_EQ(DATASTORE_OK, datastore2_set_int32(ds, ID, i, 3 * i * i * i + 2 * i * i + 5 * i - 16));
+    }
+
+    for (int32_t i = 0; i < NUM_INSTANCES; ++i) {
+        int32_t value = 0;
+        EXPECT_EQ(DATASTORE_OK, datastore2_get_int32(ds, ID, i, &value));
+        EXPECT_EQ((int32_t)(3 * i * i * i + 2 * i * i + 5 * i - 16), value);
+    }
+    datastore2_free(&ds);
+}
+
+TEST(Datastore2Test, test_tabular_float) {
+    datastore2_t * ds = datastore2_create();
+    const datastore2_resource_id_t ID = 199;
+    const uint32_t NUM_INSTANCES = 19;
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_resource(ds, ID, DATASTORE_TYPE_FLOAT, NUM_INSTANCES));
+
+    // check defaults
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        float value = 0.0f;
+        EXPECT_EQ(DATASTORE_OK, datastore2_get_float(ds, ID, i, &value));
+        EXPECT_EQ(0.0f, value);
+    }
+
+    // set all to predictable values
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        EXPECT_EQ(DATASTORE_OK, datastore2_set_float(ds, ID, i, 0.91f * i * i + 145.67f * i - 953.213f));
+    }
+
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        float value = 0.0f;
+        EXPECT_EQ(DATASTORE_OK, datastore2_get_float(ds, ID, i, &value));
+        EXPECT_EQ(0.91f * i * i + 145.67f * i - 953.213f, value);
+    }
+    datastore2_free(&ds);
+}
+
+TEST(Datastore2Test, test_tabular_double) {
+    datastore2_t * ds = datastore2_create();
+    const datastore2_resource_id_t ID = 199;
+    const uint32_t NUM_INSTANCES = 521;
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_resource(ds, ID, DATASTORE_TYPE_DOUBLE, NUM_INSTANCES));
+
+    // check defaults
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        double value = 0.0;
+        EXPECT_EQ(DATASTORE_OK, datastore2_get_double(ds, ID, i, &value));
+        EXPECT_EQ(0.0, value);
+    }
+
+    // set all to predictable values
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        EXPECT_EQ(DATASTORE_OK, datastore2_set_double(ds, ID, i, 67.91f * i * i + 135.67f * i - 953.213f));
+    }
+
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        double value = 0.0;
+        EXPECT_EQ(DATASTORE_OK, datastore2_get_double(ds, ID, i, &value));
+        EXPECT_EQ(67.91f * i * i + 135.67f * i - 953.213f, value);
+    }
+    datastore2_free(&ds);
+}
