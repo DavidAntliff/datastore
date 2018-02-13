@@ -218,8 +218,10 @@ typedef struct
 
 datastore_resource_t datastore2_create_resource(datastore_type_t type, uint32_t num_instances);
 datastore_resource_t datastore2_create_string_resource(size_t length, uint32_t num_instances);
+
 datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, const datastore_resource_t resource);
 
+// TODO: consider deprecating these
 datastore_error_t datastore2_add_fixed_length_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances);
 datastore_error_t datastore2_add_string_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, uint32_t num_instances, size_t length);
 

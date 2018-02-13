@@ -880,21 +880,21 @@ datastore2_t * datastore2_create(void)
     {
         memset(private, 0, sizeof(*private));
         _debug("malloc private %p", private);
-    private->index_rows = NULL;
-    private->index_size = 0;
+        private->index_rows = NULL;
+        private->index_size = 0;
 
-    datastore = malloc(sizeof(*datastore));
-    if (datastore)
-    {
-        _debug("malloc datastore %p", datastore);
-        memset(datastore, 0, sizeof(*datastore));
-        datastore->private_data = private;
-    }
-    else
-    {
-        _error("malloc failed");
-        free(private);
-    }
+        datastore = malloc(sizeof(*datastore));
+        if (datastore)
+        {
+            _debug("malloc datastore %p", datastore);
+            memset(datastore, 0, sizeof(*datastore));
+            datastore->private_data = private;
+        }
+        else
+        {
+            _error("malloc failed");
+            free(private);
+        }
     }
     else
     {

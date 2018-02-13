@@ -602,7 +602,7 @@ TEST(Datastore2Test, test_add_static_resources) {
         char s1[3][4];
     } st = { 42, {-7, 0, 5}, "hello", { "abc", "def", "ghi" } };
     EXPECT_EQ(DATASTORE_OK, datastore2_add_resource(ds, RESOURCE0, (datastore_resource_t){.data=&st.d0, .size=sizeof(st.d0), .type=DATASTORE_TYPE_UINT32, .num_instances=1 }));
-    EXPECT_EQ(DATASTORE_OK, datastore2_add_resource(ds, RESOURCE1, (datastore_resource_t){.data=&st.d1, .size=sizeof(st.d1), .type=DATASTORE_TYPE_INT8, .num_instances=3 }));
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_resource(ds, RESOURCE1, (datastore_resource_t){.data=&st.d1, .size=sizeof(st.d1[0]), .type=DATASTORE_TYPE_INT8, .num_instances=3 }));
     EXPECT_EQ(DATASTORE_OK, datastore2_add_resource(ds, RESOURCE2, (datastore_resource_t){.data=st.s0, .size=sizeof(st.s0), .type=DATASTORE_TYPE_STRING, .num_instances=1 }));
     EXPECT_EQ(DATASTORE_OK, datastore2_add_resource(ds, RESOURCE3, (datastore_resource_t){.data=st.s1, .size=sizeof(st.s1[0]), .type=DATASTORE_TYPE_STRING, .num_instances=3 }));
 
