@@ -161,7 +161,7 @@ typedef struct
 } datastore_t;
 
 typedef uint8_t instance_id_t;
-typedef uint32_t datastore2_instance_id_t;
+typedef int32_t datastore2_instance_id_t;
 
 // allocate, initialise and free datastore
 datastore_t * datastore_malloc(void);
@@ -207,13 +207,15 @@ typedef int32_t datastore2_resource_id_t;
 datastore2_t * datastore2_create(void);
 void datastore2_free(datastore2_t ** datastore);
 
+typedef void (*set_callback)(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, void * context);
+
 typedef struct
 {
     void * data;
     size_t size;
     datastore_type_t type;
     uint32_t num_instances;
-    bool _managed;
+    bool _managed;   // indicates memory is managed by this resource and will be freed along with it
 } datastore_resource_t;
 
 datastore_resource_t datastore2_create_resource(datastore_type_t type, uint32_t num_instances);
@@ -225,24 +227,25 @@ datastore_error_t datastore2_add_resource(datastore2_t * datastore, datastore2_r
 datastore_error_t datastore2_add_fixed_length_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances);
 datastore_error_t datastore2_add_string_resource(datastore2_t * datastore, datastore2_resource_id_t resource_id, uint32_t num_instances, size_t length);
 
-datastore_error_t datastore2_set_bool(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, bool value);
-datastore_error_t datastore2_set_uint8(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint8_t value);
-datastore_error_t datastore2_set_uint32(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint32_t value);
-datastore_error_t datastore2_set_int8(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, int8_t value);
-datastore_error_t datastore2_set_int32(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, int32_t value);
-datastore_error_t datastore2_set_float(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, float value);
-datastore_error_t datastore2_set_double(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, double value);
-datastore_error_t datastore2_set_string(datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, const char * value);
+datastore_error_t datastore2_set_bool(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, bool value);
+datastore_error_t datastore2_set_uint8(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint8_t value);
+datastore_error_t datastore2_set_uint32(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint32_t value);
+datastore_error_t datastore2_set_int8(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, int8_t value);
+datastore_error_t datastore2_set_int32(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, int32_t value);
+datastore_error_t datastore2_set_float(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, float value);
+datastore_error_t datastore2_set_double(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, double value);
+datastore_error_t datastore2_set_string(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, const char * value);
 
-datastore_error_t datastore2_get_bool(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, bool * value);
-datastore_error_t datastore2_get_uint8(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint8_t * value);
-datastore_error_t datastore2_get_uint32(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint32_t * value);
-datastore_error_t datastore2_get_int8(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, int8_t * value);
-datastore_error_t datastore2_get_int32(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, int32_t * value);
-datastore_error_t datastore2_get_float(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, float * value);
-datastore_error_t datastore2_get_double(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, double * value);
-datastore_error_t datastore2_get_string(const datastore2_t * store, datastore2_resource_id_t id, datastore2_instance_id_t instance, char * value);
+datastore_error_t datastore2_get_bool(const datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, bool * value);
+datastore_error_t datastore2_get_uint8(const datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint8_t * value);
+datastore_error_t datastore2_get_uint32(const datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, uint32_t * value);
+datastore_error_t datastore2_get_int8(const datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, int8_t * value);
+datastore_error_t datastore2_get_int32(const datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, int32_t * value);
+datastore_error_t datastore2_get_float(const datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, float * value);
+datastore_error_t datastore2_get_double(const datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, double * value);
+datastore_error_t datastore2_get_string(const datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, char * value);
 
+datastore_error_t datastore2_add_set_callback(const datastore2_t * datastore, datastore2_resource_id_t id, set_callback callback, void * context);
 
 #ifdef __cplusplus
 }

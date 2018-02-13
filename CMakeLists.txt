@@ -9,6 +9,7 @@ enable_testing()
 add_subdirectory(googletest)
 
 set(CMAKE_C_FLAGS "-std=c99")
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE=Debug)
 
 set(LIBS gtest_main gtest pthread)

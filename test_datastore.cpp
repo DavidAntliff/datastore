@@ -114,6 +114,16 @@ TEST(Datastore2Test, get_instance_of_scalar_out_of_range) {
     datastore2_free(&ds);
 }
 
+TEST(Datastore2Test, set_instance_of_scalar_out_of_range) {
+    datastore2_t * ds = datastore2_create();
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
+
+    EXPECT_EQ(DATASTORE_ERROR_INVALID_INSTANCE, datastore2_set_uint32(ds, RESOURCE0, 1, 42));
+    EXPECT_EQ(DATASTORE_ERROR_INVALID_INSTANCE, datastore2_set_uint32(ds, RESOURCE0, -1, 42));
+    EXPECT_EQ(DATASTORE_ERROR_INVALID_INSTANCE, datastore2_set_uint32(ds, RESOURCE0, 100, 42));
+    datastore2_free(&ds);
+}
+
 TEST(Datastore2Test, managed_scalar_uint32_set_and_get) {
 	datastore2_t * ds = datastore2_create();
 	EXPECT_EQ(DATASTORE_OK, datastore2_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
@@ -171,6 +181,18 @@ TEST(Datastore2Test, get_instance_of_tabular_out_of_range) {
 	EXPECT_EQ(42, value);
 	EXPECT_EQ(DATASTORE_ERROR_INVALID_INSTANCE, datastore2_get_uint32(ds, RESOURCE0, NUM_INSTANCES + 1000, &value));
 	EXPECT_EQ(42, value);
+    datastore2_free(&ds);
+}
+
+TEST(Datastore2Test, set_instance_of_tabular_out_of_range) {
+    datastore2_t * ds = datastore2_create();
+    const int NUM_INSTANCES = 1000;
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, NUM_INSTANCES));
+
+    EXPECT_EQ(DATASTORE_ERROR_INVALID_INSTANCE, datastore2_set_uint32(ds, RESOURCE0, NUM_INSTANCES, 42));
+    EXPECT_EQ(DATASTORE_ERROR_INVALID_INSTANCE, datastore2_set_uint32(ds, RESOURCE0, NUM_INSTANCES + 1, 42));
+    EXPECT_EQ(DATASTORE_ERROR_INVALID_INSTANCE, datastore2_set_uint32(ds, RESOURCE0, NUM_INSTANCES + 1000, 42));
+    EXPECT_EQ(DATASTORE_ERROR_INVALID_INSTANCE, datastore2_set_uint32(ds, RESOURCE0, -1, 42));
     datastore2_free(&ds);
 }
 
@@ -621,3 +643,73 @@ TEST(Datastore2Test, test_add_static_resources) {
     datastore2_free(&ds);
 }
 
+namespace detail {
+    struct CallbackParameterRecord {
+        CallbackParameterRecord() : datastore(nullptr), resource_id(-1), instance_id(-1), context(nullptr) {}
+        datastore2_t * datastore;
+        datastore2_resource_id_t resource_id;
+        datastore2_instance_id_t instance_id;
+        void * context;
+    };
+
+    struct CallbackRecord {
+        CallbackRecord() : counter(0), last() {}
+        int counter;
+        CallbackParameterRecord last;
+    };
+
+    static void callback(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, void * context) {
+        std::cout << "callback: " << "datastore " << datastore << ", id " << id << ", instance " << instance << ", context " << context << std::endl;
+        CallbackRecord * record = static_cast<CallbackRecord *>(context);
+        ++record->counter;
+        record->last.datastore = datastore;
+        record->last.resource_id = id;
+        record->last.instance_id = instance;
+        record->last.context = context;
+    }
+}
+
+TEST(Datastore2Test, test_set_callback) {
+    datastore2_t * ds = datastore2_create();
+    const datastore2_resource_id_t ID = 422;
+
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT32, 10));
+
+    detail::CallbackRecord record;
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_set_callback(ds, ID, detail::callback, &record));
+
+    EXPECT_EQ(DATASTORE_OK, datastore2_set_uint32(ds, ID, 0, 42));
+    uint32_t value = 0;
+    EXPECT_EQ(DATASTORE_OK, datastore2_get_uint32(ds, ID, 0, &value));
+
+    EXPECT_EQ(1, record.counter);
+    EXPECT_EQ(ds, record.last.datastore);
+    EXPECT_EQ(ID, record.last.resource_id);
+    EXPECT_EQ(0, record.last.instance_id);
+    EXPECT_EQ(&record, record.last.context);
+    EXPECT_EQ(42, value);
+
+    EXPECT_EQ(DATASTORE_OK, datastore2_set_uint32(ds, ID, 5, 17));
+    EXPECT_EQ(2, record.counter);
+    EXPECT_EQ(ds, record.last.datastore);
+    EXPECT_EQ(ID, record.last.resource_id);
+    EXPECT_EQ(5, record.last.instance_id);
+    EXPECT_EQ(&record, record.last.context);
+
+    EXPECT_EQ(DATASTORE_OK, datastore2_get_uint32(ds, ID, 5, &value));
+    EXPECT_EQ(17, value);
+
+    datastore2_free(&ds);
+}
+
+TEST(Datastore2Test, DISABLED_test_set_callback_chain) {
+    // TODO: add multiple callbacks, check they are all invoked in the correct order
+}
+
+TEST(Datastore2Test, DISABLED_test_get_from_set_callback) {
+    // TODO: test that another value can be read from datastore by the callback
+}
+
+TEST(Datastore2Test, DISABLED_test_set_from_set_callback) {
+    // TODO: test that another value can be written to the datastore by the callback
+}

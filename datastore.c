@@ -860,10 +860,16 @@ typedef struct
     void * data;   // pointer to first byte of first instance
     size_t size;   // per instance size
     bool managed;  // data allocation is managed by API
+
+    // on-set callback mechanism
+    set_callback set_callback;
+    void * set_callback_context;
+
 } index_row_t;
 
 typedef struct
 {
+    // TODO: replace with dynamic array of pointers to index rows (rather than dynamic full array)
     index_row_t * index_rows;
     size_t index_size;
 } private2_t;
@@ -1011,6 +1017,8 @@ static datastore_error_t _add_resource(datastore2_t * datastore, datastore2_reso
                             private->index_rows[resource_id].size = size;
                             private->index_rows[resource_id].type = type;
                             private->index_rows[resource_id].managed = managed;
+                            private->index_rows[resource_id].set_callback = NULL;
+                            private->index_rows[resource_id].set_callback_context = NULL;
 
                             err = DATASTORE_OK;
                         }
@@ -1176,7 +1184,7 @@ static datastore_error_t _set_value2(const datastore2_t * datastore, datastore2_
                 if (private->index_rows[id].type == expected_type)
                 {
                     // check instance
-                    if (/*instance >= 0 &&*/ instance < private->index_rows[id].num_instances)
+                    if (instance >= 0 && instance < private->index_rows[id].num_instances)
                     {
                         if (size <= private->index_rows[id].size)
                         {
@@ -1192,7 +1200,12 @@ static datastore_error_t _set_value2(const datastore2_t * datastore, datastore2_
                                 ESP_LOG_BUFFER_HEXDUMP(TAG, pdest, private->index_rows[id].size, ESP_LOG_DEBUG);
                                 xSemaphoreGive(private->semaphore);
 
-                                // TODO: call any registered callbacks with new value
+                                // call any registered callbacks with new value
+                                if (private->index_rows[id].set_callback != NULL)
+                                {
+                                    private->index_rows[id].set_callback(datastore, id, instance, private->index_rows[id].set_callback_context);
+                                }
+
                                 err = DATASTORE_OK;
                             }
                             else
@@ -1294,7 +1307,7 @@ static datastore_error_t _get_value2(const datastore2_t * datastore, datastore2_
                 if (private->index_rows[id].type == expected_type)
                 {
                     // check instance
-                    if (/*instance >= 0 &&*/ instance < private->index_rows[id].num_instances)
+                    if (instance >= 0 && instance < private->index_rows[id].num_instances)
                     {
                         if (value)
                         {
@@ -1389,3 +1402,37 @@ datastore_error_t datastore2_get_string(const datastore2_t * datastore, datastor
     return _get_value2(datastore, id, instance, value, DATASTORE_TYPE_STRING);
 }
 
+datastore_error_t datastore2_add_set_callback(const datastore2_t * datastore, datastore2_resource_id_t id, set_callback callback, void * context)
+{
+    _debug("_get_value2: id %d, instance %d, value %p, expected_type %d", id, instance, value, expected_type);
+    datastore_error_t err = DATASTORE_ERROR_UNKNOWN;
+    if (datastore != NULL)
+    {
+        private2_t * private = (private2_t *)datastore->private_data;
+        if (private != NULL)
+        {
+            if (id >= 0 && id < private->index_size / sizeof(index_row_t))
+            {
+                private->index_rows[id].set_callback = callback;
+                private->index_rows[id].set_callback_context = context;
+                err = DATASTORE_OK;
+            }
+            else
+            {
+                _error("_get_value2: bad id %d", id);
+                err = DATASTORE_ERROR_INVALID_ID;
+            }
+        }
+        else
+        {
+            _error("_get_value2: private is NULL");
+            err = DATASTORE_ERROR_NULL_POINTER;
+        }
+    }
+    else
+    {
+        _error("_get_value2: datastore is NULL");
+        err = DATASTORE_ERROR_NULL_POINTER;
+    }
+    return err;
+}
