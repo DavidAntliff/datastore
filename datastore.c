@@ -851,6 +851,14 @@ datastore_error_t datastore_dump(const datastore_t * store)
 // String instances are handled differently, using a linked list of variable
 // size strings. All other types are fixed size for fast lookup of instances.
 
+struct callback_entry_t
+{
+    struct callback_entry_t * next;
+    set_callback func;
+    void * context;
+};
+typedef struct callback_entry_t callback_entry_t;
+
 typedef struct
 {
     datastore2_resource_id_t id;   // not necessary? Keep as a check
@@ -860,10 +868,7 @@ typedef struct
     void * data;   // pointer to first byte of first instance
     size_t size;   // per instance size
     bool managed;  // data allocation is managed by API
-
-    // on-set callback mechanism
-    set_callback set_callback;
-    void * set_callback_context;
+    callback_entry_t * callbacks;
 
 } index_row_t;
 
@@ -926,6 +931,17 @@ void datastore2_free(datastore2_t ** datastore)
                     free(private->index_rows[i].data);
                 }
                 private->index_rows[i].data = NULL;
+
+                if (private->index_rows[i].callbacks != NULL)
+                {
+                    callback_entry_t * entry = private->index_rows[i].callbacks;
+                    while (entry != NULL)
+                    {
+                        callback_entry_t * next = entry->next;
+                        free(entry);
+                        entry = next;
+                    }
+                }
             }
             free(private->index_rows);
             private->index_rows = NULL;
@@ -1017,8 +1033,7 @@ static datastore_error_t _add_resource(datastore2_t * datastore, datastore2_reso
                             private->index_rows[resource_id].size = size;
                             private->index_rows[resource_id].type = type;
                             private->index_rows[resource_id].managed = managed;
-                            private->index_rows[resource_id].set_callback = NULL;
-                            private->index_rows[resource_id].set_callback_context = NULL;
+                            private->index_rows[resource_id].callbacks = NULL;
 
                             err = DATASTORE_OK;
                         }
@@ -1201,9 +1216,14 @@ static datastore_error_t _set_value2(const datastore2_t * datastore, datastore2_
                                 xSemaphoreGive(private->semaphore);
 
                                 // call any registered callbacks with new value
-                                if (private->index_rows[id].set_callback != NULL)
+                                if (private->index_rows[id].callbacks != NULL)
                                 {
-                                    private->index_rows[id].set_callback(datastore, id, instance, private->index_rows[id].set_callback_context);
+                                    callback_entry_t * entry = private->index_rows[id].callbacks;
+                                    while (entry != NULL)
+                                    {
+                                        entry->func(datastore, id, instance, entry->context);
+                                        entry = entry->next;
+                                    }
                                 }
 
                                 err = DATASTORE_OK;
@@ -1413,8 +1433,27 @@ datastore_error_t datastore2_add_set_callback(const datastore2_t * datastore, da
         {
             if (id >= 0 && id < private->index_size / sizeof(index_row_t))
             {
-                private->index_rows[id].set_callback = callback;
-                private->index_rows[id].set_callback_context = context;
+                if (private->index_rows[id].callbacks == NULL)
+                {
+                    private->index_rows[id].callbacks = malloc(sizeof(*private->index_rows[id].callbacks));
+                    private->index_rows[id].callbacks->next = NULL;
+                    private->index_rows[id].callbacks->func = callback;
+                    private->index_rows[id].callbacks->context = context;
+                }
+                else
+                {
+                    // find end of list
+                    callback_entry_t * entry = private->index_rows[id].callbacks;
+                    while (entry->next != NULL)
+                    {
+                        entry = entry->next;
+                    }
+
+                    entry->next = malloc(sizeof(*private->index_rows[id].callbacks));
+                    entry->next->next = NULL;
+                    entry->next->func = callback;
+                    entry->next->context = context;
+                }
                 err = DATASTORE_OK;
             }
             else

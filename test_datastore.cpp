@@ -702,8 +702,65 @@ TEST(Datastore2Test, test_set_callback) {
     datastore2_free(&ds);
 }
 
-TEST(Datastore2Test, DISABLED_test_set_callback_chain) {
-    // TODO: add multiple callbacks, check they are all invoked in the correct order
+namespace detail {
+
+    struct SharedCallbackRecord {
+        SharedCallbackRecord(int * shared) : shared(shared) {}
+        CallbackRecord record;
+        int * shared;
+    };
+
+    static void chained_callback1(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, void * context) {
+        std::cout << "chained_callback1: " << "datastore " << datastore << ", id " << id << ", instance " << instance << ", context " << context << std::endl;
+        SharedCallbackRecord * record = static_cast<SharedCallbackRecord *>(context);
+        callback(datastore, id, instance, &record->record);
+        *record->shared += 7;  // add 7
+    }
+
+    static void chained_callback2(datastore2_t * datastore, datastore2_resource_id_t id, datastore2_instance_id_t instance, void * context) {
+        std::cout << "chained_callback2: " << "datastore " << datastore << ", id " << id << ", instance " << instance << ", context " << context << std::endl;
+        SharedCallbackRecord * record = static_cast<SharedCallbackRecord *>(context);
+        callback(datastore, id, instance, &record->record);
+        *record->shared *= 2;  // double
+    }
+
+}
+
+TEST(Datastore2Test, test_set_callback_chain) {
+    // add multiple callbacks, check they are all invoked in the correct order
+    datastore2_t * ds = datastore2_create();
+    const datastore2_resource_id_t ID = 19;
+
+    int shared = 19;
+    detail::SharedCallbackRecord record1(&shared);
+    detail::SharedCallbackRecord record2(&shared);
+
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT32, 10));
+
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_set_callback(ds, ID, detail::chained_callback1, &record1));
+    EXPECT_EQ(DATASTORE_OK, datastore2_add_set_callback(ds, ID, detail::chained_callback2, &record2));
+
+    EXPECT_EQ(DATASTORE_OK, datastore2_set_uint32(ds, ID, 0, 42));
+
+    EXPECT_EQ(1, record1.record.counter);
+    EXPECT_EQ(ds, record1.record.last.datastore);
+    EXPECT_EQ(ID, record1.record.last.resource_id);
+    EXPECT_EQ(0, record1.record.last.instance_id);
+    EXPECT_EQ(&record1, record1.record.last.context);
+    EXPECT_EQ(1, record2.record.counter);
+    EXPECT_EQ(ds, record2.record.last.datastore);
+    EXPECT_EQ(ID, record2.record.last.resource_id);
+    EXPECT_EQ(0, record2.record.last.instance_id);
+    EXPECT_EQ(&record2, record2.record.last.context);
+
+    uint32_t value = 0;
+    EXPECT_EQ(DATASTORE_OK, datastore2_get_uint32(ds, ID, 0, &value));
+    EXPECT_EQ(42, value);
+
+    // shared_callback1 then shared_callback2 => +7 *2
+    EXPECT_EQ((19 + 7) * 2, shared);
+
+    datastore2_free(&ds);
 }
 
 TEST(Datastore2Test, DISABLED_test_get_from_set_callback) {
