@@ -52,16 +52,6 @@
 #define xSemaphoreTake(...)
 #define xSemaphoreGive(...)
 
-static void _get_handler(uint8_t * src, uint8_t * dest, size_t len)
-{
-    memcpy(dest, src, len);
-}
-
-static void _set_handler(uint8_t * src, uint8_t * dest, size_t len)
-{
-    memcpy(dest, src, len);
-}
-
 // String instances are handled differently, using a linked list of variable
 // size strings. All other types are fixed size for fast lookup of instances.
 
@@ -92,6 +82,18 @@ typedef struct
     index_row_t * index_rows;
     size_t index_size;
 } private_t;
+
+// must be in same order as datastore_type_t!
+uint8_t TYPE_SIZES[DATASTORE_TYPE_LAST] = {
+    sizeof(bool),
+    sizeof(uint8_t),
+    sizeof(uint32_t),
+    sizeof(int8_t),
+    sizeof(int32_t),
+    sizeof(float),
+    sizeof(double),
+    0,    // string is handled differently
+};
 
 #define _error(f, ...) do { fprintf(stdout /*stderr*/, f"\n", ##__VA_ARGS__); } while (0)
 #define _debug(f, ...)
@@ -173,20 +175,6 @@ void datastore_free(datastore_t ** datastore)
         _error("invalid pointer");
     }
 }
-
-// must be in same order as datastore_type_t!
-uint8_t TYPE_SIZES[DATASTORE_TYPE_LAST] = {
-    sizeof(bool),
-    sizeof(uint8_t),
-    sizeof(uint32_t),
-    sizeof(int8_t),
-    sizeof(int32_t),
-    sizeof(float),
-    sizeof(double),
-    0,    // string is handled differently
-};
-
-// TODO: check strings are pooled
 
 static datastore_status_t _add_resource(const datastore_t * datastore, datastore_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances, void * data, size_t size, bool managed)
 {
@@ -398,6 +386,11 @@ datastore_status_t datastore_add_string_resource(const datastore_t * datastore, 
     return err;
 }
 
+static void _set_handler(uint8_t * src, uint8_t * dest, size_t len)
+{
+    memcpy(dest, src, len);
+}
+
 static datastore_status_t _set_value(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, const void * value, size_t size, datastore_type_t expected_type)
 {
     _debug("_set_value: id %d, instance %d, value %p, size %d, expected_type %d", id, instance, value, size, expected_type);
@@ -421,7 +414,7 @@ static datastore_status_t _set_value(const datastore_t * datastore, datastore_re
                             {
                                 // finally, set the value
                                 uint8_t * pdest = (uint8_t *)private->index_rows[id].data + instance * private->index_rows[id].size;
-                                _debug("_set_value2: id %d, instance %d, value %p, type %d, data %p, size 0x%lx, pdest %p",
+                                _debug("_set_value: id %d, instance %d, value %p, type %d, data %p, size 0x%lx, pdest %p",
                                        id, instance, value, private->index_rows[id].type, private->index_rows[id].data, private->index_rows[id].size, pdest);
 
                                 xSemaphoreTake(private->semaphore, portMAX_DELAY);
@@ -444,43 +437,43 @@ static datastore_status_t _set_value(const datastore_t * datastore, datastore_re
                             }
                             else
                             {
-                                _error("_set_value2: value is NULL");
+                                _error("_set_value: value is NULL");
                                 err = DATASTORE_STATUS_ERROR_NULL_POINTER;
                             }
                         }
                         else
                         {
-                            _error("_set_value2: value size %lu exceeds allocated size %lu", size, private->index_rows[id].size);
+                            _error("_set_value: value size %lu exceeds allocated size %lu", size, private->index_rows[id].size);
                             err = DATASTORE_STATUS_ERROR_TOO_LARGE;
                         }
                     }
                     else
                     {
-                        _error("_set_value2: instance %d is invalid", instance);
+                        _error("_set_value: instance %d is invalid", instance);
                         err = DATASTORE_STATUS_ERROR_INVALID_INSTANCE;
                     }
                 }
                 else
                 {
-                    _error("_set_value2: bad type %d (expected %d)", private->index_rows[id].type, expected_type);
+                    _error("_set_value: bad type %d (expected %d)", private->index_rows[id].type, expected_type);
                     err = DATASTORE_STATUS_ERROR_INVALID_TYPE;
                 }
             }
             else
             {
-                _error("_set_value2: bad id %d", id);
+                _error("_set_value: bad id %d", id);
                 err = DATASTORE_STATUS_ERROR_INVALID_ID;
             }
         }
         else
         {
-            _error("_set_value2: private is NULL");
+            _error("_set_value: private is NULL");
             err = DATASTORE_STATUS_ERROR_NULL_POINTER;
         }
     }
     else
     {
-        _error("_set_value2: datastore is NULL");
+        _error("_set_value: datastore is NULL");
         err = DATASTORE_STATUS_ERROR_NULL_POINTER;
     }
     return err;
@@ -523,7 +516,22 @@ datastore_status_t datastore_set_double(const datastore_t * datastore, datastore
 
 datastore_status_t datastore_set_string(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, const char * value)
 {
-    return _set_value(datastore, id, instance, value, strlen(value) + 1, DATASTORE_TYPE_STRING);
+    datastore_status_t err = DATASTORE_STATUS_UNKNOWN;
+    if (value != NULL)
+    {
+        err = _set_value(datastore, id, instance, value, strlen(value) + 1, DATASTORE_TYPE_STRING);
+    }
+    else
+    {
+        _error("value is NULL");
+        err = DATASTORE_STATUS_ERROR_NULL_POINTER;
+    }
+    return err;
+}
+
+static void _get_handler(uint8_t * src, uint8_t * dest, size_t len)
+{
+    memcpy(dest, src, len);
 }
 
 static datastore_status_t _get_value(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, void * value, datastore_type_t expected_type)
@@ -547,7 +555,7 @@ static datastore_status_t _get_value(const datastore_t * datastore, datastore_re
                         {
                             // finally, get the value
                             uint8_t * psrc = (uint8_t *)private->index_rows[id].data + instance * private->index_rows[id].size;
-                            _debug("_get_value2: id %d, instance %d, value %p, type %d, data %p, size 0x%lx, psrc %p",
+                            _debug("_get_value: id %d, instance %d, value %p, type %d, data %p, size 0x%lx, psrc %p",
                                    id, instance, value, private->index_rows[id].type, private->index_rows[id].data, private->index_rows[id].size, psrc);
                             ESP_LOG_BUFFER_HEXDUMP(TAG, psrc, private->index_rows[id].size, ESP_LOG_DEBUG);
 
@@ -560,37 +568,37 @@ static datastore_status_t _get_value(const datastore_t * datastore, datastore_re
                         }
                         else
                         {
-                            _error("_get_value2: value is NULL");
+                            _error("_get_value: value is NULL");
                             err = DATASTORE_STATUS_ERROR_NULL_POINTER;
                         }
                     }
                     else
                     {
-                        _error("_get_value2: instance %d is invalid", instance);
+                        _error("_get_value: instance %d is invalid", instance);
                         err = DATASTORE_STATUS_ERROR_INVALID_INSTANCE;
                     }
                 }
                 else
                 {
-                    _error("_get_value2: bad type %d (expected %d)", private->index_rows[id].type, expected_type);
+                    _error("_get_value: bad type %d (expected %d)", private->index_rows[id].type, expected_type);
                     err = DATASTORE_STATUS_ERROR_INVALID_TYPE;
                 }
             }
             else
             {
-                _error("_get_value2: bad id %d", id);
+                _error("_get_value: bad id %d", id);
                 err = DATASTORE_STATUS_ERROR_INVALID_ID;
             }
         }
         else
         {
-            _error("_get_value2: private is NULL");
+            _error("_get_value: private is NULL");
             err = DATASTORE_STATUS_ERROR_NULL_POINTER;
         }
     }
     else
     {
-        _error("_get_value2: datastore is NULL");
+        _error("_get_value: datastore is NULL");
         err = DATASTORE_STATUS_ERROR_NULL_POINTER;
     }
     return err;
@@ -638,7 +646,7 @@ datastore_status_t datastore_get_string(const datastore_t * datastore, datastore
 
 datastore_status_t datastore_add_set_callback(const datastore_t * datastore, datastore_resource_id_t id, set_callback callback, void * context)
 {
-    _debug("_get_value2: id %d, instance %d, value %p, expected_type %d", id, instance, value, expected_type);
+    _debug("_get_value: id %d, instance %d, value %p, expected_type %d", id, instance, value, expected_type);
     datastore_status_t err = DATASTORE_STATUS_UNKNOWN;
     if (datastore != NULL)
     {
@@ -672,19 +680,19 @@ datastore_status_t datastore_add_set_callback(const datastore_t * datastore, dat
             }
             else
             {
-                _error("_get_value2: bad id %d", id);
+                _error("_get_value: bad id %d", id);
                 err = DATASTORE_STATUS_ERROR_INVALID_ID;
             }
         }
         else
         {
-            _error("_get_value2: private is NULL");
+            _error("_get_value: private is NULL");
             err = DATASTORE_STATUS_ERROR_NULL_POINTER;
         }
     }
     else
     {
-        _error("_get_value2: datastore is NULL");
+        _error("_get_value: datastore is NULL");
         err = DATASTORE_STATUS_ERROR_NULL_POINTER;
     }
     return err;

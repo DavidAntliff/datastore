@@ -207,6 +207,16 @@ TEST(Datastore2Test, get_resource_with_wrong_function) {
     datastore_free(&ds);
 }
 
+TEST(Datastore2Test, test_set_with_null_datastore) {
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_set_bool(NULL, 0, 0, true));
+}
+
+TEST(Datastore2Test, test_set_string_with_null_value) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_set_string(ds, 0, 0, NULL));
+    datastore_free(&ds);
+}
+
 TEST(Datastore2Test, test_scalar_bool) {
 	datastore_t * ds = datastore_create();
 	const datastore_resource_id_t ID = RESOURCE3;
@@ -603,6 +613,22 @@ TEST(Datastore2Test, test_create_and_add_resources) {
     datastore_free(&ds);
 }
 
+TEST(Datastore2Test, test_add_resource_with_null_data) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_resource(ds, RESOURCE0, (datastore_resource_t){.data=NULL, .size=0, .type=DATASTORE_TYPE_UINT32, .num_instances=1 }));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_resource(ds, RESOURCE0, (datastore_resource_t){.data=NULL, .size=4, .type=DATASTORE_TYPE_UINT32, .num_instances=1 }));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_resource(ds, RESOURCE0, (datastore_resource_t){.data=NULL, .size=4, .type=DATASTORE_TYPE_UINT32, .num_instances=10 }));
+    datastore_free(&ds);
+}
+
+TEST(Datastore2Test, test_create_resource_with_invalid_type) {
+    datastore_t * ds = datastore_create();
+    datastore_resource_t resource = datastore_create_resource(DATASTORE_TYPE_INVALID, 1);
+    EXPECT_EQ(NULL, resource.data);
+    EXPECT_EQ(0, resource.size);
+    datastore_free(&ds);
+}
+
 TEST(Datastore2Test, test_add_static_resources) {
     datastore_t * ds = datastore_create();
     struct st {
@@ -690,6 +716,25 @@ TEST(Datastore2Test, test_set_callback) {
     datastore_free(&ds);
 }
 
+TEST(Datastore2Test, test_set_callback_with_null_datastore) {
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_set_callback(NULL, 0, detail::callback, NULL));
+}
+
+TEST(Datastore2Test, test_set_callback_with_null_private) {
+    datastore_t * ds = datastore_create();
+    auto tmp = ds->private_data;
+    ds->private_data = NULL;
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_set_callback(ds, 0, detail::callback, NULL));
+    ds->private_data = tmp;
+    datastore_free(&ds);
+}
+
+TEST(Datastore2Test, test_set_callback_with_invalid_id) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_add_set_callback(ds, 17, detail::callback, NULL));
+    datastore_free(&ds);
+}
+
 namespace detail {
 
     struct SharedCallbackRecord {
@@ -712,6 +757,12 @@ namespace detail {
         *record->shared *= 2;  // double
     }
 
+    static void chained_callback3(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, void * context) {
+        std::cout << "chained_callback3: " << "datastore " << datastore << ", id " << id << ", instance " << instance << ", context " << context << std::endl;
+        SharedCallbackRecord * record = static_cast<SharedCallbackRecord *>(context);
+        callback(datastore, id, instance, &record->record);
+        *record->shared -= 1;  // subtract 1
+    }
 }
 
 TEST(Datastore2Test, test_set_callback_chain) {
@@ -722,11 +773,13 @@ TEST(Datastore2Test, test_set_callback_chain) {
     int shared = 19;
     detail::SharedCallbackRecord record1(&shared);
     detail::SharedCallbackRecord record2(&shared);
+    detail::SharedCallbackRecord record3(&shared);
 
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT32, 10));
 
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, ID, detail::chained_callback1, &record1));
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, ID, detail::chained_callback2, &record2));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, ID, detail::chained_callback3, &record3));
 
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, ID, 0, 42));
 
@@ -740,13 +793,18 @@ TEST(Datastore2Test, test_set_callback_chain) {
     EXPECT_EQ(ID, record2.record.last.resource_id);
     EXPECT_EQ(0, record2.record.last.instance_id);
     EXPECT_EQ(&record2, record2.record.last.context);
+    EXPECT_EQ(1, record3.record.counter);
+    EXPECT_EQ(ds, record3.record.last.datastore);
+    EXPECT_EQ(ID, record3.record.last.resource_id);
+    EXPECT_EQ(0, record3.record.last.instance_id);
+    EXPECT_EQ(&record3, record3.record.last.context);
 
     uint32_t value = 0;
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, ID, 0, &value));
     EXPECT_EQ(42, value);
 
-    // shared_callback1 then shared_callback2 => +7 *2
-    EXPECT_EQ((19 + 7) * 2, shared);
+    // shared_callback1 then shared_callback2 => (((x + 7) * 2) - 1)
+    EXPECT_EQ(((19 + 7) * 2) - 1, shared);
 
     datastore_free(&ds);
 }
