@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(datastore)
 
-## Locate GTest
-#find_package(GTest REQUIRED)
-#include_directories(${GTEST_INCLUDE_DIRS})
-
 enable_testing()
 add_subdirectory(googletest)
 
@@ -21,7 +17,18 @@ endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/googletest/include)
 add_executable(test_datastore datastore.c test_datastore.cpp)
-#target_link_libraries(test_datastore gtest_main gtest pthread bsd)
 target_link_libraries(test_datastore ${LIBS})
-#target_link_libraries(test_datastore ${GTEST_LIBRARIES} pthread)
 
+# Custom target to run the tests
+add_custom_target(run
+  COMMAND test_datastore
+  DEPENDS test_datastore
+  WORKING_DIRECTORY ${CMAKE_PROJECT_DIR}
+)
+
+# Custom target to generate an HTML GCOV report
+add_custom_target(report.html
+  COMMAND gcovr -r . --root .. --html --html-details -o report.html
+  DEPENDS run
+  WORKING_DIRECTORY ${CMAKE_PROJECT_DIR}
+)
