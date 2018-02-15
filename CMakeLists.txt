@@ -8,7 +8,9 @@ project(datastore)
 enable_testing()
 add_subdirectory(googletest)
 
-set(CMAKE_C_FLAGS "-std=c99")
+string(APPEND CMAKE_C_FLAGS " -std=c99")
+string(APPEND CMAKE_C_FLAGS " -g -O0 --coverage")
+string(APPEND CMAKE_EXE_LINKER_FLAGS " --coverage")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE=Debug)
 
