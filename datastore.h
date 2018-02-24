@@ -27,14 +27,12 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef int datastore_id_t;
-
-// TODO: rename to DATASTORE_STATUS_...
 typedef enum
 {
     DATASTORE_STATUS_UNKNOWN = -1,
@@ -112,10 +110,9 @@ datastore_status_t datastore_get_string(const datastore_t * datastore, datastore
 
 datastore_status_t datastore_add_set_callback(const datastore_t * datastore, datastore_resource_id_t id, set_callback callback, void * context);
 
-//TODO
-//datastore_status_t datastore_toggle(datastore_t * store, datastore_id_t id, instance_id_t instance);
-//datastore_status_t datastore_increment(datastore_t * store, datastore_id_t id, instance_id_t instance);
-//datastore_status_t datastore_dump(const datastore_t * store);
+uint32_t datastore_num_instances(const datastore_t * datastore, datastore_resource_id_t resource_id);
+datastore_status_t datastore_increment(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance);
+datastore_status_t datastore_dump(const datastore_t * datastore);
 
 
 #ifdef __cplusplus

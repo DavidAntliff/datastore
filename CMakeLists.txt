@@ -11,9 +11,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE=Debug)
 
 set(LIBS gtest_main gtest pthread)
-if(NOT APPLE)
-  list(APPEND LIBS bsd)
-endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/googletest/include)
 add_executable(test_datastore datastore.c test_datastore.cpp)

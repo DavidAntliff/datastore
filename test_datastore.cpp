@@ -7,78 +7,79 @@ typedef enum {
 	RESOURCE1,
 	RESOURCE2,
 	RESOURCE3,
+	RESOURCE4,
 } resource_id;
 
-TEST(Datastore2Test, create_and_free) {
+TEST(DatastoreTest, create_and_free) {
 	datastore_t * ds = datastore_create();
     ASSERT_TRUE(NULL != ds);
     datastore_free(&ds);
     EXPECT_EQ(NULL, ds);
 }
 
-TEST(Datastore2Test, free_invalid) {
+TEST(DatastoreTest, free_invalid) {
 	datastore_free(NULL);
 	datastore_t * ds = datastore_create();
     datastore_free(&ds);
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, add_managed_scalar_uint32) {
+TEST(DatastoreTest, add_managed_scalar_uint32) {
 	datastore_t * ds = datastore_create();
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, add_managed_scalar_string) {
+TEST(DatastoreTest, add_managed_scalar_string) {
     datastore_t * ds = datastore_create();
     const uint32_t STRING_LEN = 32;
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_string_resource(ds, RESOURCE0, 1, STRING_LEN));
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, add_managed_tabular_uint32) {
+TEST(DatastoreTest, add_managed_tabular_uint32) {
 	datastore_t * ds = datastore_create();
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1000));
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, add_managed_tabular_string) {
+TEST(DatastoreTest, add_managed_tabular_string) {
     datastore_t * ds = datastore_create();
     const uint32_t STRING_LEN = 32;
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_string_resource(ds, RESOURCE0, 100, STRING_LEN));
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, add_managed_scalar_uint32_to_null_datastore) {
+TEST(DatastoreTest, add_managed_scalar_uint32_to_null_datastore) {
 	EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_fixed_length_resource(NULL, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
 }
 
-TEST(Datastore2Test, add_managed_with_invalid_id) {
+TEST(DatastoreTest, add_managed_with_invalid_id) {
 	datastore_t * ds = datastore_create();
 	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_add_fixed_length_resource(ds, RESOURCE_INVALID, DATASTORE_TYPE_UINT32, 1));
 	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_add_fixed_length_resource(ds, -1000, DATASTORE_TYPE_UINT32, 1));
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, add_managed_with_invalid_type) {
+TEST(DatastoreTest, add_managed_with_invalid_type) {
 	datastore_t * ds = datastore_create();
 	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_LAST, 1));
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, add_managed_with_invalid_number_of_instances) {
+TEST(DatastoreTest, add_managed_with_invalid_number_of_instances) {
 	datastore_t * ds = datastore_create();
 	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 0));
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, add_managed_string_with_wrong_function) {
+TEST(DatastoreTest, add_managed_string_with_wrong_function) {
 	datastore_t * ds = datastore_create();
 	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_STRING, 1));
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, managed_scalar_uint32_defaults_to_zero) {
+TEST(DatastoreTest, managed_scalar_uint32_defaults_to_zero) {
 	datastore_t * ds = datastore_create();
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
 
@@ -88,7 +89,7 @@ TEST(Datastore2Test, managed_scalar_uint32_defaults_to_zero) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, get_instance_of_scalar_out_of_range) {
+TEST(DatastoreTest, get_instance_of_scalar_out_of_range) {
 	datastore_t * ds = datastore_create();
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
 
@@ -102,7 +103,7 @@ TEST(Datastore2Test, get_instance_of_scalar_out_of_range) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, set_instance_of_scalar_out_of_range) {
+TEST(DatastoreTest, set_instance_of_scalar_out_of_range) {
     datastore_t * ds = datastore_create();
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
 
@@ -112,7 +113,7 @@ TEST(Datastore2Test, set_instance_of_scalar_out_of_range) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, managed_scalar_uint32_set_and_get) {
+TEST(DatastoreTest, managed_scalar_uint32_set_and_get) {
 	datastore_t * ds = datastore_create();
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
 
@@ -124,7 +125,7 @@ TEST(Datastore2Test, managed_scalar_uint32_set_and_get) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, managed_scalar_uint32_set_and_get_multiple) {
+TEST(DatastoreTest, managed_scalar_uint32_set_and_get_multiple) {
 	datastore_t * ds = datastore_create();
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
 
@@ -144,7 +145,7 @@ TEST(Datastore2Test, managed_scalar_uint32_set_and_get_multiple) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, managed_tabular_uint32_defaults_to_zero) {
+TEST(DatastoreTest, managed_tabular_uint32_defaults_to_zero) {
 	datastore_t * ds = datastore_create();
 	const int NUM_INSTANCES = 1000;
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, NUM_INSTANCES));
@@ -157,7 +158,7 @@ TEST(Datastore2Test, managed_tabular_uint32_defaults_to_zero) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, get_instance_of_tabular_out_of_range) {
+TEST(DatastoreTest, get_instance_of_tabular_out_of_range) {
 	datastore_t * ds = datastore_create();
 	const int NUM_INSTANCES = 1000;
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, NUM_INSTANCES));
@@ -172,7 +173,7 @@ TEST(Datastore2Test, get_instance_of_tabular_out_of_range) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, set_instance_of_tabular_out_of_range) {
+TEST(DatastoreTest, set_instance_of_tabular_out_of_range) {
     datastore_t * ds = datastore_create();
     const int NUM_INSTANCES = 1000;
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, NUM_INSTANCES));
@@ -184,7 +185,7 @@ TEST(Datastore2Test, set_instance_of_tabular_out_of_range) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, get_unknown_resources) {
+TEST(DatastoreTest, get_unknown_resources) {
 	datastore_t * ds = datastore_create();
 	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_get_bool(ds, RESOURCE0, 0, NULL));
 	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_get_uint32(ds, RESOURCE1, 4, NULL));
@@ -192,7 +193,7 @@ TEST(Datastore2Test, get_unknown_resources) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, get_resource_with_wrong_function) {
+TEST(DatastoreTest, get_resource_with_wrong_function) {
 	datastore_t * ds = datastore_create();
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE1, DATASTORE_TYPE_BOOL, 1));
@@ -207,17 +208,17 @@ TEST(Datastore2Test, get_resource_with_wrong_function) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_set_with_null_datastore) {
+TEST(DatastoreTest, test_set_with_null_datastore) {
     EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_set_bool(NULL, 0, 0, true));
 }
 
-TEST(Datastore2Test, test_set_string_with_null_value) {
+TEST(DatastoreTest, test_set_string_with_null_value) {
     datastore_t * ds = datastore_create();
     EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_set_string(ds, 0, 0, NULL));
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_scalar_bool) {
+TEST(DatastoreTest, test_scalar_bool) {
 	datastore_t * ds = datastore_create();
 	const datastore_resource_id_t ID = RESOURCE3;
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_BOOL, 1));
@@ -233,7 +234,7 @@ TEST(Datastore2Test, test_scalar_bool) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_scalar_uint8) {
+TEST(DatastoreTest, test_scalar_uint8) {
 	datastore_t * ds = datastore_create();
 	const datastore_resource_id_t ID = 99;
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT8, 1));
@@ -249,7 +250,7 @@ TEST(Datastore2Test, test_scalar_uint8) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_scalar_uint32) {
+TEST(DatastoreTest, test_scalar_uint32) {
 	datastore_t * ds = datastore_create();
 	const datastore_resource_id_t ID = 1234;
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT32, 1));
@@ -265,7 +266,7 @@ TEST(Datastore2Test, test_scalar_uint32) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_scalar_int8) {
+TEST(DatastoreTest, test_scalar_int8) {
 	datastore_t * ds = datastore_create();
 	const datastore_resource_id_t ID = 99;
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_INT8, 1));
@@ -284,7 +285,7 @@ TEST(Datastore2Test, test_scalar_int8) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_scalar_int32) {
+TEST(DatastoreTest, test_scalar_int32) {
 	datastore_t * ds = datastore_create();
 	const datastore_resource_id_t ID = 1234;
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_INT32, 1));
@@ -303,7 +304,7 @@ TEST(Datastore2Test, test_scalar_int32) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_scalar_float) {
+TEST(DatastoreTest, test_scalar_float) {
 	datastore_t * ds = datastore_create();
 	const datastore_resource_id_t ID = 1;
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_FLOAT, 1));
@@ -322,7 +323,7 @@ TEST(Datastore2Test, test_scalar_float) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_scalar_double) {
+TEST(DatastoreTest, test_scalar_double) {
 	datastore_t * ds = datastore_create();
 	const datastore_resource_id_t ID = 42;
 	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_DOUBLE, 1));
@@ -341,7 +342,7 @@ TEST(Datastore2Test, test_scalar_double) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_scalar_string) {
+TEST(DatastoreTest, test_scalar_string) {
     datastore_t * ds = datastore_create();
     const datastore_resource_id_t ID = 42;
     const uint32_t STRING_LEN = 8;  // inc. 1 for null terminator
@@ -361,7 +362,7 @@ TEST(Datastore2Test, test_scalar_string) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_scalar_string_exceeds_allocated_length) {
+TEST(DatastoreTest, test_scalar_string_exceeds_allocated_length) {
     datastore_t * ds = datastore_create();
     const datastore_resource_id_t ID = 4;
     const uint32_t STRING_LEN = 8;  // inc. 1 for null terminator
@@ -372,7 +373,7 @@ TEST(Datastore2Test, test_scalar_string_exceeds_allocated_length) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_tabular_bool) {
+TEST(DatastoreTest, test_tabular_bool) {
 	datastore_t * ds = datastore_create();
 	const datastore_resource_id_t ID = 199;
 	const uint32_t NUM_INSTANCES = 200;
@@ -398,7 +399,7 @@ TEST(Datastore2Test, test_tabular_bool) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_tabular_uint8) {
+TEST(DatastoreTest, test_tabular_uint8) {
 	datastore_t * ds = datastore_create();
 	const datastore_resource_id_t ID = 55;
 	const uint32_t NUM_INSTANCES = 1000;
@@ -424,7 +425,7 @@ TEST(Datastore2Test, test_tabular_uint8) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_tabular_uint32) {
+TEST(DatastoreTest, test_tabular_uint32) {
 	datastore_t * ds = datastore_create();
 	const datastore_resource_id_t ID = 55;
 	const uint32_t NUM_INSTANCES = 1000;
@@ -450,7 +451,7 @@ TEST(Datastore2Test, test_tabular_uint32) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_tabular_int8) {
+TEST(DatastoreTest, test_tabular_int8) {
     datastore_t * ds = datastore_create();
     const datastore_resource_id_t ID = 55;
     const int32_t NUM_INSTANCES = 1000;
@@ -476,7 +477,7 @@ TEST(Datastore2Test, test_tabular_int8) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_tabular_int32) {
+TEST(DatastoreTest, test_tabular_int32) {
     datastore_t * ds = datastore_create();
     const datastore_resource_id_t ID = 55;
     const int32_t NUM_INSTANCES = 1000;
@@ -502,7 +503,7 @@ TEST(Datastore2Test, test_tabular_int32) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_tabular_float) {
+TEST(DatastoreTest, test_tabular_float) {
     datastore_t * ds = datastore_create();
     const datastore_resource_id_t ID = 199;
     const uint32_t NUM_INSTANCES = 19;
@@ -528,7 +529,7 @@ TEST(Datastore2Test, test_tabular_float) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_tabular_double) {
+TEST(DatastoreTest, test_tabular_double) {
     datastore_t * ds = datastore_create();
     const datastore_resource_id_t ID = 199;
     const uint32_t NUM_INSTANCES = 521;
@@ -554,7 +555,7 @@ TEST(Datastore2Test, test_tabular_double) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_tabular_string) {
+TEST(DatastoreTest, test_tabular_string) {
     datastore_t * ds = datastore_create();
     const datastore_resource_id_t ID = 5432;
     const uint32_t NUM_INSTANCES = 21;
@@ -586,7 +587,7 @@ TEST(Datastore2Test, test_tabular_string) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_tabular_string_exceeds_allocated_length) {
+TEST(DatastoreTest, test_tabular_string_exceeds_allocated_length) {
     datastore_t * ds = datastore_create();
     const datastore_resource_id_t ID = 43;
     const uint32_t NUM_INSTANCES = 54;
@@ -604,7 +605,7 @@ TEST(Datastore2Test, test_tabular_string_exceeds_allocated_length) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_create_and_add_resources) {
+TEST(DatastoreTest, test_create_and_add_resources) {
     datastore_t * ds = datastore_create();
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_UINT8, 1)));
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE1, datastore_create_resource(DATASTORE_TYPE_INT32, 7)));
@@ -613,7 +614,7 @@ TEST(Datastore2Test, test_create_and_add_resources) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_add_resource_with_null_data) {
+TEST(DatastoreTest, test_add_resource_with_null_data) {
     datastore_t * ds = datastore_create();
     EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_resource(ds, RESOURCE0, (datastore_resource_t){.data=NULL, .size=0, .type=DATASTORE_TYPE_UINT32, .num_instances=1 }));
     EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_resource(ds, RESOURCE0, (datastore_resource_t){.data=NULL, .size=4, .type=DATASTORE_TYPE_UINT32, .num_instances=1 }));
@@ -621,7 +622,7 @@ TEST(Datastore2Test, test_add_resource_with_null_data) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_create_resource_with_invalid_type) {
+TEST(DatastoreTest, test_create_resource_with_invalid_type) {
     datastore_t * ds = datastore_create();
     datastore_resource_t resource = datastore_create_resource(DATASTORE_TYPE_INVALID, 1);
     EXPECT_EQ(NULL, resource.data);
@@ -629,7 +630,7 @@ TEST(Datastore2Test, test_create_resource_with_invalid_type) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_add_static_resources) {
+TEST(DatastoreTest, test_add_static_resources) {
     datastore_t * ds = datastore_create();
     struct st {
         uint32_t d0;
@@ -683,7 +684,7 @@ namespace detail {
     }
 }
 
-TEST(Datastore2Test, test_set_callback) {
+TEST(DatastoreTest, test_set_callback) {
     datastore_t * ds = datastore_create();
     const datastore_resource_id_t ID = 422;
 
@@ -716,11 +717,11 @@ TEST(Datastore2Test, test_set_callback) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_set_callback_with_null_datastore) {
+TEST(DatastoreTest, test_set_callback_with_null_datastore) {
     EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_set_callback(NULL, 0, detail::callback, NULL));
 }
 
-TEST(Datastore2Test, test_set_callback_with_null_private) {
+TEST(DatastoreTest, test_set_callback_with_null_private) {
     datastore_t * ds = datastore_create();
     auto tmp = ds->private_data;
     ds->private_data = NULL;
@@ -729,7 +730,7 @@ TEST(Datastore2Test, test_set_callback_with_null_private) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, test_set_callback_with_invalid_id) {
+TEST(DatastoreTest, test_set_callback_with_invalid_id) {
     datastore_t * ds = datastore_create();
     EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_add_set_callback(ds, 17, detail::callback, NULL));
     datastore_free(&ds);
@@ -765,7 +766,7 @@ namespace detail {
     }
 }
 
-TEST(Datastore2Test, test_set_callback_chain) {
+TEST(DatastoreTest, test_set_callback_chain) {
     // add multiple callbacks, check they are all invoked in the correct order
     datastore_t * ds = datastore_create();
     const datastore_resource_id_t ID = 19;
@@ -809,10 +810,140 @@ TEST(Datastore2Test, test_set_callback_chain) {
     datastore_free(&ds);
 }
 
-TEST(Datastore2Test, DISABLED_test_get_from_set_callback) {
+TEST(DatastoreTest, DISABLED_test_get_from_set_callback) {
     // TODO: test that another value can be read from datastore by the callback
 }
 
-TEST(Datastore2Test, DISABLED_test_set_from_set_callback) {
+TEST(DatastoreTest, DISABLED_test_set_from_set_callback) {
     // TODO: test that another value can be written to the datastore by the callback
 }
+
+TEST(DatastoreTest, test_get_number_of_instances) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_UINT32, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE1, datastore_create_resource(DATASTORE_TYPE_INT8, 11)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE2, datastore_create_resource(DATASTORE_TYPE_BOOL, 99)));
+
+    EXPECT_EQ(1, datastore_num_instances(ds, RESOURCE0));
+    EXPECT_EQ(11, datastore_num_instances(ds, RESOURCE1));
+    EXPECT_EQ(99, datastore_num_instances(ds, RESOURCE2));
+
+    EXPECT_EQ(0, datastore_num_instances(ds, RESOURCE3));
+    EXPECT_EQ(0, datastore_num_instances(NULL, RESOURCE0));
+    EXPECT_EQ(0, datastore_num_instances(NULL, RESOURCE3));
+
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_dump) {
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_dump(NULL));
+
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_dump(ds));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_UINT32, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE1, datastore_create_resource(DATASTORE_TYPE_INT8, 2)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE2, datastore_create_resource(DATASTORE_TYPE_BOOL, 3)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE3, datastore_create_string_resource(32, 4)));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, 42));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int8(ds, RESOURCE1, 0, 10));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int8(ds, RESOURCE1, 1, 20));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE2, 0, true));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE2, 1, true));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE2, 2, false));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_string(ds, RESOURCE3, 0, "first"));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_string(ds, RESOURCE3, 1, "second"));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_string(ds, RESOURCE3, 2, "third"));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_string(ds, RESOURCE3, 3, "fourth"));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_dump(ds));
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_increment_uint32) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_UINT32, 10)));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, 42));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_increment(ds, RESOURCE0, 0));
+    uint32_t value = 0;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 0, &value));
+    EXPECT_EQ(43, value);
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 5, 17));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_increment(ds, RESOURCE0, 5));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_increment(ds, RESOURCE0, 5));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 5, &value));
+    EXPECT_EQ(19, value);
+
+    datastore_free(&ds);
+}
+
+// TODO: check on increment callback
+
+TEST(DatastoreTest, test_increment_int8) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_INT8, 10)));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int8(ds, RESOURCE0, 0, -42));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_increment(ds, RESOURCE0, 0));
+    int8_t value = 0;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int8(ds, RESOURCE0, 0, &value));
+    EXPECT_EQ(-41, value);
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int8(ds, RESOURCE0, 5, 17));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_increment(ds, RESOURCE0, 5));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_increment(ds, RESOURCE0, 5));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int8(ds, RESOURCE0, 5, &value));
+    EXPECT_EQ(19, value);
+
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_increment_bool) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_BOOL, 10)));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE0, 0, true));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_increment(ds, RESOURCE0, 0));
+    bool value = true;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_bool(ds, RESOURCE0, 0, &value));
+    EXPECT_EQ(false, value);
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE0, 5, false));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_increment(ds, RESOURCE0, 5));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_bool(ds, RESOURCE0, 5, &value));
+    EXPECT_EQ(true, value);
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_increment(ds, RESOURCE0, 5));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_bool(ds, RESOURCE0, 5, &value));
+    EXPECT_EQ(false, value);
+
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_increment_invalid) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_UINT32, 10)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE1, datastore_create_resource(DATASTORE_TYPE_FLOAT, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE2, datastore_create_resource(DATASTORE_TYPE_DOUBLE, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE3, datastore_create_string_resource(10, 1)));
+
+    // invalid id
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_increment(ds, RESOURCE4, 0));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_increment(ds, -1, 0));
+
+    // invalid instances
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_increment(ds, RESOURCE0, -1));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_increment(ds, RESOURCE0, 11));
+
+    // invalid types
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_increment(ds, RESOURCE1, 0));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_increment(ds, RESOURCE2, 0));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_increment(ds, RESOURCE3, 0));
+
+    datastore_free(&ds);
+}
+
+
