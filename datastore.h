@@ -85,6 +85,8 @@ datastore_resource_t datastore_create_resource(datastore_type_t type, uint32_t n
 datastore_resource_t datastore_create_string_resource(size_t length, uint32_t num_instances);
 
 datastore_status_t datastore_add_resource(const datastore_t * datastore, datastore_resource_id_t resource_id, const datastore_resource_t resource);
+datastore_status_t datastore_set_name(const datastore_t * datastore, datastore_resource_id_t resource_id, const char * name);
+const char * datastore_get_name(const datastore_t * datastore, datastore_resource_id_t resource_id);
 
 // TODO: consider deprecating these
 datastore_status_t datastore_add_fixed_length_resource(const datastore_t * datastore, datastore_resource_id_t resource_id, datastore_type_t type, uint32_t num_instances);

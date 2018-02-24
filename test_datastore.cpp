@@ -857,6 +857,11 @@ TEST(DatastoreTest, test_dump) {
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_string(ds, RESOURCE3, 2, "third"));
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_string(ds, RESOURCE3, 3, "fourth"));
 
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_name(ds, RESOURCE0, "resource 0"));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_name(ds, RESOURCE1, "resource 1"));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_name(ds, RESOURCE2, "resource 2"));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_name(ds, RESOURCE3, "resource 3"));
+
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_dump(ds));
     datastore_free(&ds);
 }
@@ -946,4 +951,26 @@ TEST(DatastoreTest, test_increment_invalid) {
     datastore_free(&ds);
 }
 
+TEST(DatastoreTest, test_set_and_get_name) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_UINT32, 10)));
 
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_set_name(NULL, RESOURCE0, ""));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_set_name(ds, RESOURCE1, "name"));
+
+    EXPECT_EQ(NULL, datastore_get_name(ds, RESOURCE0)); // default
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_name(ds, RESOURCE0, ""));
+    EXPECT_STREQ("", datastore_get_name(ds, RESOURCE0));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_name(ds, RESOURCE0, "name1"));
+    EXPECT_STREQ("name1", datastore_get_name(ds, RESOURCE0));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_name(ds, RESOURCE0, "abcdefghijklmnopqrstuvwxyz1234567890-_=+[{]}\\|;:'\",<.>/?!@#$%^&*()"));
+    EXPECT_STREQ("abcdefghijklmnopqrstuvwxyz1234567890-_=+[{]}\\|;:'\",<.>/?!@#$%^&*()", datastore_get_name(ds, RESOURCE0));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_name(ds, RESOURCE0, NULL));  // setting to NULL is OK
+    EXPECT_EQ(NULL, datastore_get_name(ds, RESOURCE0));
+
+    datastore_free(&ds);
+}

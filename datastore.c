@@ -130,6 +130,9 @@ void datastore_free(datastore_t ** datastore)
                 }
                 private->index_rows[i].data = NULL;
 
+                free((void *)private->index_rows[i].name);
+                private->index_rows[i].name = NULL;
+
                 if (private->index_rows[i].callbacks != NULL)
                 {
                     callback_entry_t * entry = private->index_rows[i].callbacks;
@@ -215,7 +218,7 @@ static datastore_status_t _add_resource(const datastore_t * datastore, datastore
                             platform_debug("register id %d, data %p", resource_id, data);
                             private->index_rows[resource_id].id = resource_id;
                             private->index_rows[resource_id].data = data;
-                            private->index_rows[resource_id].name = "TODO";
+                            private->index_rows[resource_id].name = NULL;
                             private->index_rows[resource_id].num_instances = num_instances;
                             private->index_rows[resource_id].size = size;
                             private->index_rows[resource_id].type = type;
@@ -371,6 +374,83 @@ datastore_status_t datastore_add_string_resource(const datastore_t * datastore, 
         platform_error("malloc returned NULL");
     }
     return err;
+}
+
+datastore_status_t datastore_set_name(const datastore_t * datastore, datastore_resource_id_t resource_id, const char * name)
+{
+    datastore_status_t err = DATASTORE_STATUS_UNKNOWN;
+    if (datastore != NULL)
+    {
+        private_t * private = (private_t *)datastore->private_data;
+        if (private != NULL)
+        {
+            if (resource_id >= 0 && resource_id < private->index_size / sizeof(index_row_t))
+            {
+                platform_semaphore_take(private->semaphore);
+                if (private->index_rows[resource_id].name != NULL)
+                {
+                    free((void *)private->index_rows[resource_id].name);
+                }
+                if (name != NULL)
+                {
+                    private->index_rows[resource_id].name = strdup(name);
+                }
+                else
+                {
+                    private->index_rows[resource_id].name = NULL;
+                }
+                platform_semaphore_give(private->semaphore);
+                err = DATASTORE_STATUS_OK;
+            }
+            else
+            {
+                platform_error("bad id %d", resource_id);
+                err = DATASTORE_STATUS_ERROR_INVALID_ID;
+            }
+        }
+        else
+        {
+            platform_error("private is NULL");
+            err = DATASTORE_STATUS_ERROR_NULL_POINTER;
+        }
+    }
+    else
+    {
+        platform_error("datastore is NULL");
+        err = DATASTORE_STATUS_ERROR_NULL_POINTER;
+    }
+    return err;
+}
+
+const char * datastore_get_name(const datastore_t * datastore, datastore_resource_id_t resource_id)
+{
+    const char * name = NULL;
+    if (datastore != NULL)
+    {
+        private_t * private = (private_t *)datastore->private_data;
+        if (private != NULL)
+        {
+            if (resource_id >= 0 && resource_id < private->index_size / sizeof(index_row_t))
+            {
+                platform_semaphore_take(private->semaphore);
+                name = private->index_rows[resource_id].name;
+                platform_semaphore_give(private->semaphore);
+            }
+            else
+            {
+                platform_error("bad id %d", resource_id);
+            }
+        }
+        else
+        {
+            platform_error("private is NULL");
+        }
+    }
+    else
+    {
+        platform_error("datastore is NULL");
+    }
+    return name;
 }
 
 static void _set_handler(uint8_t * src, uint8_t * dest, size_t len)
