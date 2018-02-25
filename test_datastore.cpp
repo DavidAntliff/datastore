@@ -2,31 +2,34 @@
 #include "datastore.h"
 
 typedef enum {
-	RESOURCE_INVALID = -1,
-	RESOURCE0 = 0,
-	RESOURCE1,
-	RESOURCE2,
-	RESOURCE3,
-	RESOURCE4,
+    RESOURCE_INVALID = -1,
+    RESOURCE0 = 0,
+    RESOURCE1,
+    RESOURCE2,
+    RESOURCE3,
+    RESOURCE4,
+    RESOURCE5,
+    RESOURCE6,
+    RESOURCE7,
 } resource_id;
 
 TEST(DatastoreTest, create_and_free) {
-	datastore_t * ds = datastore_create();
+    datastore_t * ds = datastore_create();
     ASSERT_TRUE(NULL != ds);
     datastore_free(&ds);
     EXPECT_EQ(NULL, ds);
 }
 
 TEST(DatastoreTest, free_invalid) {
-	datastore_free(NULL);
-	datastore_t * ds = datastore_create();
+    datastore_free(NULL);
+    datastore_t * ds = datastore_create();
     datastore_free(&ds);
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, add_managed_scalar_uint32) {
-	datastore_t * ds = datastore_create();
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
     datastore_free(&ds);
 }
 
@@ -38,8 +41,8 @@ TEST(DatastoreTest, add_managed_scalar_string) {
 }
 
 TEST(DatastoreTest, add_managed_tabular_uint32) {
-	datastore_t * ds = datastore_create();
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1000));
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1000));
     datastore_free(&ds);
 }
 
@@ -51,55 +54,55 @@ TEST(DatastoreTest, add_managed_tabular_string) {
 }
 
 TEST(DatastoreTest, add_managed_scalar_uint32_to_null_datastore) {
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_fixed_length_resource(NULL, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_fixed_length_resource(NULL, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
 }
 
 TEST(DatastoreTest, add_managed_with_invalid_id) {
-	datastore_t * ds = datastore_create();
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_add_fixed_length_resource(ds, RESOURCE_INVALID, DATASTORE_TYPE_UINT32, 1));
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_add_fixed_length_resource(ds, -1000, DATASTORE_TYPE_UINT32, 1));
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_add_fixed_length_resource(ds, RESOURCE_INVALID, DATASTORE_TYPE_UINT32, 1));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_add_fixed_length_resource(ds, -1000, DATASTORE_TYPE_UINT32, 1));
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, add_managed_with_invalid_type) {
-	datastore_t * ds = datastore_create();
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_LAST, 1));
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_LAST, 1));
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, add_managed_with_invalid_number_of_instances) {
-	datastore_t * ds = datastore_create();
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 0));
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 0));
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, add_managed_string_with_wrong_function) {
-	datastore_t * ds = datastore_create();
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_STRING, 1));
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_STRING, 1));
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, managed_scalar_uint32_defaults_to_zero) {
-	datastore_t * ds = datastore_create();
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
 
-	uint32_t value = 42;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 0, &value));
-	EXPECT_EQ(0, value);
+    uint32_t value = 42;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 0, &value));
+    EXPECT_EQ(0, value);
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, get_instance_of_scalar_out_of_range) {
-	datastore_t * ds = datastore_create();
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
 
-	uint32_t value = 42;
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_uint32(ds, RESOURCE0, 1, &value));
-	EXPECT_EQ(42, value);
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_uint32(ds, RESOURCE0, -1, &value));
-	EXPECT_EQ(42, value);
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_uint32(ds, RESOURCE0, 100, &value));
-	EXPECT_EQ(42, value);
+    uint32_t value = 42;
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_uint32(ds, RESOURCE0, 1, &value));
+    EXPECT_EQ(42, value);
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_uint32(ds, RESOURCE0, -1, &value));
+    EXPECT_EQ(42, value);
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_uint32(ds, RESOURCE0, 100, &value));
+    EXPECT_EQ(42, value);
     datastore_free(&ds);
 }
 
@@ -114,62 +117,62 @@ TEST(DatastoreTest, set_instance_of_scalar_out_of_range) {
 }
 
 TEST(DatastoreTest, managed_scalar_uint32_set_and_get) {
-	datastore_t * ds = datastore_create();
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
 
-	uint32_t value = 0;
+    uint32_t value = 0;
 
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, 17));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 0, &value));
-	EXPECT_EQ(17, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, 17));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 0, &value));
+    EXPECT_EQ(17, value);
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, managed_scalar_uint32_set_and_get_multiple) {
-	datastore_t * ds = datastore_create();
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
 
-	uint32_t value = 0;
+    uint32_t value = 0;
 
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, UINT32_MAX));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 0, &value));
-	EXPECT_EQ(UINT32_MAX, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, UINT32_MAX));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 0, &value));
+    EXPECT_EQ(UINT32_MAX, value);
 
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, 0));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 0, &value));
-	EXPECT_EQ(0, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, 0));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 0, &value));
+    EXPECT_EQ(0, value);
 
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, 1234567890));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 0, &value));
-	EXPECT_EQ(1234567890, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, 1234567890));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 0, &value));
+    EXPECT_EQ(1234567890, value);
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, managed_tabular_uint32_defaults_to_zero) {
-	datastore_t * ds = datastore_create();
-	const int NUM_INSTANCES = 1000;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, NUM_INSTANCES));
+    datastore_t * ds = datastore_create();
+    const int NUM_INSTANCES = 1000;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, NUM_INSTANCES));
 
-	for (int i = 0; i < NUM_INSTANCES; ++i) {
-		uint32_t value = 42;
-		EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, i, &value));
-		EXPECT_EQ(0, value);
-	}
+    for (int i = 0; i < NUM_INSTANCES; ++i) {
+        uint32_t value = 42;
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, i, &value));
+        EXPECT_EQ(0, value);
+    }
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, get_instance_of_tabular_out_of_range) {
-	datastore_t * ds = datastore_create();
-	const int NUM_INSTANCES = 1000;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, NUM_INSTANCES));
+    datastore_t * ds = datastore_create();
+    const int NUM_INSTANCES = 1000;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, NUM_INSTANCES));
 
-	uint32_t value = 42;
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_uint32(ds, RESOURCE0, NUM_INSTANCES, &value));
-	EXPECT_EQ(42, value);
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_uint32(ds, RESOURCE0, NUM_INSTANCES + 1, &value));
-	EXPECT_EQ(42, value);
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_uint32(ds, RESOURCE0, NUM_INSTANCES + 1000, &value));
-	EXPECT_EQ(42, value);
+    uint32_t value = 42;
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_uint32(ds, RESOURCE0, NUM_INSTANCES, &value));
+    EXPECT_EQ(42, value);
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_uint32(ds, RESOURCE0, NUM_INSTANCES + 1, &value));
+    EXPECT_EQ(42, value);
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_uint32(ds, RESOURCE0, NUM_INSTANCES + 1000, &value));
+    EXPECT_EQ(42, value);
     datastore_free(&ds);
 }
 
@@ -186,25 +189,25 @@ TEST(DatastoreTest, set_instance_of_tabular_out_of_range) {
 }
 
 TEST(DatastoreTest, get_unknown_resources) {
-	datastore_t * ds = datastore_create();
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_get_bool(ds, RESOURCE0, 0, NULL));
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_get_uint32(ds, RESOURCE1, 4, NULL));
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_get_string(ds, RESOURCE2, 0, NULL));
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_get_bool(ds, RESOURCE0, 0, NULL));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_get_uint32(ds, RESOURCE1, 4, NULL));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_get_string(ds, RESOURCE2, 0, NULL, 4));
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, get_resource_with_wrong_function) {
-	datastore_t * ds = datastore_create();
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE1, DATASTORE_TYPE_BOOL, 1));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE2, DATASTORE_TYPE_FLOAT, 1));
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE1, DATASTORE_TYPE_BOOL, 1));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE2, DATASTORE_TYPE_FLOAT, 1));
 
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_get_bool(ds, RESOURCE0, 0, NULL));
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_get_int32(ds, RESOURCE0, 0, NULL));
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_get_uint32(ds, RESOURCE1, 4, NULL));
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_get_uint8(ds, RESOURCE1, 4, NULL));
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_get_string(ds, RESOURCE2, 0, NULL));
-	EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_get_double(ds, RESOURCE2, 0, NULL));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_get_bool(ds, RESOURCE0, 0, NULL));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_get_int32(ds, RESOURCE0, 0, NULL));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_get_uint32(ds, RESOURCE1, 4, NULL));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_get_uint8(ds, RESOURCE1, 4, NULL));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_get_string(ds, RESOURCE2, 0, NULL, 4));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_TYPE, datastore_get_double(ds, RESOURCE2, 0, NULL));
     datastore_free(&ds);
 }
 
@@ -219,126 +222,126 @@ TEST(DatastoreTest, test_set_string_with_null_value) {
 }
 
 TEST(DatastoreTest, test_scalar_bool) {
-	datastore_t * ds = datastore_create();
-	const datastore_resource_id_t ID = RESOURCE3;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_BOOL, 1));
-	bool value = false;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_bool(ds, ID, 0, &value));
-	EXPECT_FALSE(value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, ID, 0, true));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_bool(ds, ID, 0, &value));
-	EXPECT_TRUE(value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, ID, 0, false));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_bool(ds, ID, 0, &value));
-	EXPECT_FALSE(value);
+    datastore_t * ds = datastore_create();
+    const datastore_resource_id_t ID = RESOURCE3;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_BOOL, 1));
+    bool value = false;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_bool(ds, ID, 0, &value));
+    EXPECT_FALSE(value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, ID, 0, true));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_bool(ds, ID, 0, &value));
+    EXPECT_TRUE(value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, ID, 0, false));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_bool(ds, ID, 0, &value));
+    EXPECT_FALSE(value);
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, test_scalar_uint8) {
-	datastore_t * ds = datastore_create();
-	const datastore_resource_id_t ID = 99;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT8, 1));
-	uint8_t value = 42;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint8(ds, ID, 0, &value));
-	EXPECT_EQ(0, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint8(ds, ID, 0, UINT8_MAX));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint8(ds, ID, 0, &value));
-	EXPECT_EQ(UINT8_MAX, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint8(ds, ID, 0, 0));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint8(ds, ID, 0, &value));
-	EXPECT_EQ(0, value);
+    datastore_t * ds = datastore_create();
+    const datastore_resource_id_t ID = 99;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT8, 1));
+    uint8_t value = 42;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint8(ds, ID, 0, &value));
+    EXPECT_EQ(0, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint8(ds, ID, 0, UINT8_MAX));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint8(ds, ID, 0, &value));
+    EXPECT_EQ(UINT8_MAX, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint8(ds, ID, 0, 0));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint8(ds, ID, 0, &value));
+    EXPECT_EQ(0, value);
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, test_scalar_uint32) {
-	datastore_t * ds = datastore_create();
-	const datastore_resource_id_t ID = 1234;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT32, 1));
-	uint32_t value = 42;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, ID, 0, &value));
-	EXPECT_EQ(0, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, ID, 0, UINT32_MAX));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, ID, 0, &value));
-	EXPECT_EQ(UINT32_MAX, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, ID, 0, 0));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, ID, 0, &value));
-	EXPECT_EQ(0, value);
+    datastore_t * ds = datastore_create();
+    const datastore_resource_id_t ID = 1234;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT32, 1));
+    uint32_t value = 42;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, ID, 0, &value));
+    EXPECT_EQ(0, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, ID, 0, UINT32_MAX));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, ID, 0, &value));
+    EXPECT_EQ(UINT32_MAX, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, ID, 0, 0));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, ID, 0, &value));
+    EXPECT_EQ(0, value);
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, test_scalar_int8) {
-	datastore_t * ds = datastore_create();
-	const datastore_resource_id_t ID = 99;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_INT8, 1));
-	int8_t value = 42;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int8(ds, ID, 0, &value));
-	EXPECT_EQ(0, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int8(ds, ID, 0, INT8_MAX));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int8(ds, ID, 0, &value));
-	EXPECT_EQ(INT8_MAX, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int8(ds, ID, 0, 0));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int8(ds, ID, 0, &value));
-	EXPECT_EQ(0, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int8(ds, ID, 0, INT8_MIN));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int8(ds, ID, 0, &value));
-	EXPECT_EQ(INT8_MIN, value);
+    datastore_t * ds = datastore_create();
+    const datastore_resource_id_t ID = 99;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_INT8, 1));
+    int8_t value = 42;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int8(ds, ID, 0, &value));
+    EXPECT_EQ(0, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int8(ds, ID, 0, INT8_MAX));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int8(ds, ID, 0, &value));
+    EXPECT_EQ(INT8_MAX, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int8(ds, ID, 0, 0));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int8(ds, ID, 0, &value));
+    EXPECT_EQ(0, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int8(ds, ID, 0, INT8_MIN));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int8(ds, ID, 0, &value));
+    EXPECT_EQ(INT8_MIN, value);
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, test_scalar_int32) {
-	datastore_t * ds = datastore_create();
-	const datastore_resource_id_t ID = 1234;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_INT32, 1));
-	int32_t value = 42;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int32(ds, ID, 0, &value));
-	EXPECT_EQ(0, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int32(ds, ID, 0, INT32_MAX));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int32(ds, ID, 0, &value));
-	EXPECT_EQ(INT32_MAX, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int32(ds, ID, 0, 0));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int32(ds, ID, 0, &value));
-	EXPECT_EQ(0, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int32(ds, ID, 0, INT32_MIN));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int32(ds, ID, 0, &value));
-	EXPECT_EQ(INT32_MIN, value);
+    datastore_t * ds = datastore_create();
+    const datastore_resource_id_t ID = 1234;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_INT32, 1));
+    int32_t value = 42;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int32(ds, ID, 0, &value));
+    EXPECT_EQ(0, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int32(ds, ID, 0, INT32_MAX));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int32(ds, ID, 0, &value));
+    EXPECT_EQ(INT32_MAX, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int32(ds, ID, 0, 0));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int32(ds, ID, 0, &value));
+    EXPECT_EQ(0, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int32(ds, ID, 0, INT32_MIN));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_int32(ds, ID, 0, &value));
+    EXPECT_EQ(INT32_MIN, value);
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, test_scalar_float) {
-	datastore_t * ds = datastore_create();
-	const datastore_resource_id_t ID = 1;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_FLOAT, 1));
-	float value = 42.7f;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_float(ds, ID, 0, &value));
-	EXPECT_EQ(0.0f, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_float(ds, ID, 0, FLT_MAX));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_float(ds, ID, 0, &value));
-	EXPECT_EQ(FLT_MAX, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_float(ds, ID, 0, 0.0f));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_float(ds, ID, 0, &value));
-	EXPECT_EQ(0.0f, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_float(ds, ID, 0, FLT_MIN));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_float(ds, ID, 0, &value));
-	EXPECT_EQ(FLT_MIN, value);
+    datastore_t * ds = datastore_create();
+    const datastore_resource_id_t ID = 1;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_FLOAT, 1));
+    float value = 42.7f;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_float(ds, ID, 0, &value));
+    EXPECT_EQ(0.0f, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_float(ds, ID, 0, FLT_MAX));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_float(ds, ID, 0, &value));
+    EXPECT_EQ(FLT_MAX, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_float(ds, ID, 0, 0.0f));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_float(ds, ID, 0, &value));
+    EXPECT_EQ(0.0f, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_float(ds, ID, 0, FLT_MIN));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_float(ds, ID, 0, &value));
+    EXPECT_EQ(FLT_MIN, value);
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, test_scalar_double) {
-	datastore_t * ds = datastore_create();
-	const datastore_resource_id_t ID = 42;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_DOUBLE, 1));
-	double value = 42.7;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_double(ds, ID, 0, &value));
-	EXPECT_EQ(0.0f, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_double(ds, ID, 0, DBL_MAX));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_double(ds, ID, 0, &value));
-	EXPECT_EQ(DBL_MAX, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_double(ds, ID, 0, 0.0));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_double(ds, ID, 0, &value));
-	EXPECT_EQ(0.0, value);
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_double(ds, ID, 0, DBL_MIN));
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_double(ds, ID, 0, &value));
-	EXPECT_EQ(DBL_MIN, value);
+    datastore_t * ds = datastore_create();
+    const datastore_resource_id_t ID = 42;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_DOUBLE, 1));
+    double value = 42.7;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_double(ds, ID, 0, &value));
+    EXPECT_EQ(0.0f, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_double(ds, ID, 0, DBL_MAX));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_double(ds, ID, 0, &value));
+    EXPECT_EQ(DBL_MAX, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_double(ds, ID, 0, 0.0));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_double(ds, ID, 0, &value));
+    EXPECT_EQ(0.0, value);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_double(ds, ID, 0, DBL_MIN));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_double(ds, ID, 0, &value));
+    EXPECT_EQ(DBL_MIN, value);
     datastore_free(&ds);
 }
 
@@ -348,16 +351,16 @@ TEST(DatastoreTest, test_scalar_string) {
     const uint32_t STRING_LEN = 8;  // inc. 1 for null terminator
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_string_resource(ds, ID, 1, STRING_LEN));
     char value[STRING_LEN] = "";
-    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_string(ds, ID, 0, value));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_string(ds, ID, 0, value, sizeof(value)));
     EXPECT_STREQ("", value);
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_string(ds, ID, 0, "abcdefg"));
-    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_string(ds, ID, 0, value));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_string(ds, ID, 0, value, sizeof(value)));
     EXPECT_STREQ("abcdefg", value);
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_string(ds, ID, 0, ""));
-    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_string(ds, ID, 0, value));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_string(ds, ID, 0, value, sizeof(value)));
     EXPECT_STREQ("", value);
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_string(ds, ID, 0, "1234567"));
-    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_string(ds, ID, 0, value));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_string(ds, ID, 0, value, sizeof(value)));
     EXPECT_STREQ("1234567", value);
     datastore_free(&ds);
 }
@@ -374,80 +377,80 @@ TEST(DatastoreTest, test_scalar_string_exceeds_allocated_length) {
 }
 
 TEST(DatastoreTest, test_tabular_bool) {
-	datastore_t * ds = datastore_create();
-	const datastore_resource_id_t ID = 199;
-	const uint32_t NUM_INSTANCES = 200;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_BOOL, NUM_INSTANCES));
+    datastore_t * ds = datastore_create();
+    const datastore_resource_id_t ID = 199;
+    const uint32_t NUM_INSTANCES = 200;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_BOOL, NUM_INSTANCES));
 
-	// check defaults
-	for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
-		bool value = false;
-		EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_bool(ds, ID, i, &value));
-		EXPECT_FALSE(value);
-	}
+    // check defaults
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        bool value = false;
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_bool(ds, ID, i, &value));
+        EXPECT_FALSE(value);
+    }
 
-	// set all to predictable values
-	for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
-		EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, ID, i, (i / 3) % 2 ? true : false));
-	}
+    // set all to predictable values
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, ID, i, (i / 3) % 2 ? true : false));
+    }
 
-	for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
-		bool value = false;
-		EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_bool(ds, ID, i, &value));
-		EXPECT_EQ((i / 3) % 2 ? true : false, value);
-	}
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        bool value = false;
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_bool(ds, ID, i, &value));
+        EXPECT_EQ((i / 3) % 2 ? true : false, value);
+    }
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, test_tabular_uint8) {
-	datastore_t * ds = datastore_create();
-	const datastore_resource_id_t ID = 55;
-	const uint32_t NUM_INSTANCES = 1000;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT8, NUM_INSTANCES));
+    datastore_t * ds = datastore_create();
+    const datastore_resource_id_t ID = 55;
+    const uint32_t NUM_INSTANCES = 1000;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT8, NUM_INSTANCES));
 
-	// check defaults
-	for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
-		uint8_t value = 0;
-		EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint8(ds, ID, i, &value));
-		EXPECT_FALSE(value);
-	}
+    // check defaults
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        uint8_t value = 0;
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint8(ds, ID, i, &value));
+        EXPECT_FALSE(value);
+    }
 
-	// set all to predictable values
-	for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
-		EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint8(ds, ID, i, i * i + 3 * i - 7));
-	}
+    // set all to predictable values
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint8(ds, ID, i, i * i + 3 * i - 7));
+    }
 
-	for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
-		uint8_t value = 0;
-		EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint8(ds, ID, i, &value));
-		EXPECT_EQ((uint8_t)(i * i + 3 * i - 7), value);
-	}
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        uint8_t value = 0;
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint8(ds, ID, i, &value));
+        EXPECT_EQ((uint8_t)(i * i + 3 * i - 7), value);
+    }
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, test_tabular_uint32) {
-	datastore_t * ds = datastore_create();
-	const datastore_resource_id_t ID = 55;
-	const uint32_t NUM_INSTANCES = 1000;
-	EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT32, NUM_INSTANCES));
+    datastore_t * ds = datastore_create();
+    const datastore_resource_id_t ID = 55;
+    const uint32_t NUM_INSTANCES = 1000;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT32, NUM_INSTANCES));
 
-	// check defaults
-	for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
-		uint32_t value = 0;
-		EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, ID, i, &value));
-		EXPECT_FALSE(value);
-	}
+    // check defaults
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        uint32_t value = 0;
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, ID, i, &value));
+        EXPECT_FALSE(value);
+    }
 
-	// set all to predictable values
-	for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
-		EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, ID, i, 3 * i * i * i + 2 * i * i + 5 * i - 16));
-	}
+    // set all to predictable values
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, ID, i, 3 * i * i * i + 2 * i * i + 5 * i - 16));
+    }
 
-	for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
-		uint32_t value = 0;
-		EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, ID, i, &value));
-		EXPECT_EQ((uint32_t)(3 * i * i * i + 2 * i * i + 5 * i - 16), value);
-	}
+    for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
+        uint32_t value = 0;
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, ID, i, &value));
+        EXPECT_EQ((uint32_t)(3 * i * i * i + 2 * i * i + 5 * i - 16), value);
+    }
     datastore_free(&ds);
 }
 
@@ -566,7 +569,7 @@ TEST(DatastoreTest, test_tabular_string) {
     // check defaults
     for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
         memset(value, 0, STRING_LEN);
-        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_string(ds, ID, i, value));
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_string(ds, ID, i, value, sizeof(value)));
         EXPECT_STREQ("", value);
     }
 
@@ -579,7 +582,7 @@ TEST(DatastoreTest, test_tabular_string) {
 
     for (uint32_t i = 0; i < NUM_INSTANCES; ++i) {
         memset(value, 0, STRING_LEN);
-        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_string(ds, ID, i, value));
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_string(ds, ID, i, value, sizeof(value)));
         char s[STRING_LEN] = "";
         snprintf(s, STRING_LEN, "abc-%03d", i);
         EXPECT_STREQ(s, value);
@@ -737,7 +740,6 @@ TEST(DatastoreTest, test_set_callback_with_invalid_id) {
 }
 
 namespace detail {
-
     struct SharedCallbackRecord {
         SharedCallbackRecord(int * shared) : shared(shared) {}
         CallbackRecord record;
@@ -971,6 +973,137 @@ TEST(DatastoreTest, test_set_and_get_name) {
 
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_name(ds, RESOURCE0, NULL));  // setting to NULL is OK
     EXPECT_EQ(NULL, datastore_get_name(ds, RESOURCE0));
+
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_get_as_string) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_BOOL, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE1, datastore_create_resource(DATASTORE_TYPE_UINT8, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE2, datastore_create_resource(DATASTORE_TYPE_UINT32, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE3, datastore_create_resource(DATASTORE_TYPE_INT8, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE4, datastore_create_resource(DATASTORE_TYPE_INT32, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE5, datastore_create_resource(DATASTORE_TYPE_FLOAT, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE6, datastore_create_resource(DATASTORE_TYPE_DOUBLE, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE7, datastore_create_string_resource(256, 1)));
+
+    char buffer[256] = {0};
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE0, 0, true));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE0, 0, buffer, 256));
+    EXPECT_STREQ("true", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE0, 0, false));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE0, 0, buffer, 256));
+    EXPECT_STREQ("false", buffer);
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint8(ds, RESOURCE1, 0, 0));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE1, 0, buffer, 256));
+    EXPECT_STREQ("0", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint8(ds, RESOURCE1, 0, 42));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE1, 0, buffer, 256));
+    EXPECT_STREQ("42", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint8(ds, RESOURCE1, 0, 255));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE1, 0, buffer, 256));
+    EXPECT_STREQ("255", buffer);
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE2, 0, 0));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE2, 0, buffer, 256));
+    EXPECT_STREQ("0", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE2, 0, 1234567));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE2, 0, buffer, 256));
+    EXPECT_STREQ("1234567", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE2, 0, 4294967295));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE2, 0, buffer, 256));
+    EXPECT_STREQ("4294967295", buffer);
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int8(ds, RESOURCE3, 0, 0));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE3, 0, buffer, 256));
+    EXPECT_STREQ("0", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int8(ds, RESOURCE3, 0, -17));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE3, 0, buffer, 256));
+    EXPECT_STREQ("-17", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int8(ds, RESOURCE3, 0, 127));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE3, 0, buffer, 256));
+    EXPECT_STREQ("127", buffer);
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int32(ds, RESOURCE4, 0, 0));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE4, 0, buffer, 256));
+    EXPECT_STREQ("0", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int32(ds, RESOURCE4, 0, -1234567));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE4, 0, buffer, 256));
+    EXPECT_STREQ("-1234567", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_int32(ds, RESOURCE4, 0, 429496729));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE4, 0, buffer, 256));
+    EXPECT_STREQ("429496729", buffer);
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_float(ds, RESOURCE5, 0, 0));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE5, 0, buffer, 256));
+    EXPECT_STREQ("0", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_float(ds, RESOURCE5, 0, -123.456));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE5, 0, buffer, 256));
+    EXPECT_STREQ("-123.456", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_float(ds, RESOURCE5, 0, 12.345e23));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE5, 0, buffer, 256));
+    EXPECT_STREQ("1.2345e+24", buffer);
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_double(ds, RESOURCE6, 0, 0));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE6, 0, buffer, 256));
+    EXPECT_STREQ("0", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_double(ds, RESOURCE6, 0, -123.456));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE6, 0, buffer, 256));
+    EXPECT_STREQ("-123.456", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_double(ds, RESOURCE6, 0, 12.345e23));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE6, 0, buffer, 256));
+    EXPECT_STREQ("1.2345e+24", buffer);
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_string(ds, RESOURCE7, 0, ""));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE7, 0, buffer, 256));
+    EXPECT_STREQ("", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_string(ds, RESOURCE7, 0, "-123.456"));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE7, 0, buffer, 256));
+    EXPECT_STREQ("-123.456", buffer);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_string(ds, RESOURCE7, 0, "12.345e+23"));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE7, 0, buffer, 256));
+    EXPECT_STREQ("12.345e+23", buffer);
+
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_get_as_string_invalid) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_BOOL, 1)));
+
+    char buffer[256] = {0};
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_get_as_string(NULL, RESOURCE0, 0, buffer, 256));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_get_as_string(ds, RESOURCE0, 0, NULL, 256));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_get_as_string(ds, RESOURCE1, 0, buffer, 256));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_as_string(ds, RESOURCE0, 1, buffer, 256));
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_get_as_string_truncation) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_BOOL, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE2, datastore_create_resource(DATASTORE_TYPE_UINT32, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE7, datastore_create_string_resource(256, 1)));
+
+    char buffer[3] = {0};
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE0, 0, true));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE0, 0, buffer, 3));
+    EXPECT_STREQ("tr", buffer);
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE0, 0, false));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE0, 0, buffer, 3));
+    EXPECT_STREQ("fa", buffer);
+
+    char buffer2[6] = {0};
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE2, 0, 12345678));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE2, 0, buffer2, 6));
+    EXPECT_STREQ("12345", buffer2);
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_string(ds, RESOURCE7, 0, "1234567890"));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_as_string(ds, RESOURCE7, 0, buffer2, 6));
+    EXPECT_STREQ("12345", buffer2);
 
     datastore_free(&ds);
 }
