@@ -671,9 +671,11 @@ namespace detail {
     };
 
     struct CallbackRecord {
-        CallbackRecord() : counter(0), last() {}
+        CallbackRecord() : counter(0), last(), value1(0), value2(0) {}
         int counter;
         CallbackParameterRecord last;
+        uint32_t value1;
+        uint32_t value2;
     };
 
     static void callback(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, void * context) {
@@ -812,12 +814,99 @@ TEST(DatastoreTest, test_set_callback_chain) {
     datastore_free(&ds);
 }
 
-TEST(DatastoreTest, DISABLED_test_get_from_set_callback) {
-    // TODO: test that another value can be read from datastore by the callback
+namespace detail {
+    static void callback_with_get(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, void * context) {
+        std::cout << "callback: " << "datastore " << datastore << ", id " << id << ", instance " << instance << ", context " << context << std::endl;
+        CallbackRecord * record = static_cast<CallbackRecord *>(context);
+        ++record->counter;
+        record->last.datastore = datastore;
+        record->last.resource_id = id;
+        record->last.instance_id = instance;
+        record->last.context = context;
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(datastore, id, instance, &record->value1));
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(datastore, RESOURCE7, 0, &record->value2));
+    }
 }
 
-TEST(DatastoreTest, DISABLED_test_set_from_set_callback) {
-    // TODO: test that another value can be written to the datastore by the callback
+TEST(DatastoreTest, test_get_from_set_callback) {
+    // test that other value can be read from datastore by the callback
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_UINT32, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE7, datastore_create_resource(DATASTORE_TYPE_UINT32, 1)));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, 100));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE7, 0, 200));
+
+    detail::CallbackRecord record;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, RESOURCE0, detail::callback_with_get, &record));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, 42));
+
+    EXPECT_EQ(1, record.counter);
+    EXPECT_EQ(ds, record.last.datastore);
+    EXPECT_EQ(RESOURCE0, record.last.resource_id);
+    EXPECT_EQ(0, record.last.instance_id);
+    EXPECT_EQ(&record, record.last.context);
+
+    uint32_t value1 = 0;
+    uint32_t value2 = 0;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 0, &value1));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE7, 0, &value2));
+
+    EXPECT_EQ(42, value1);
+    EXPECT_EQ(record.value1, value1);
+    EXPECT_EQ(record.value2, value2);
+
+    datastore_free(&ds);
+}
+
+namespace detail {
+    static void callback_with_set(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, void * context) {
+        std::cout << "callback: " << "datastore " << datastore << ", id " << id << ", instance " << instance << ", context " << context << std::endl;
+        CallbackRecord * record = static_cast<CallbackRecord *>(context);
+        ++record->counter;
+        record->last.datastore = datastore;
+        record->last.resource_id = id;
+        record->last.instance_id = instance;
+        record->last.context = context;
+        // to avoid an infinite loop, do not set the same resource!
+        //EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(datastore, id, instance, record->value1));
+        EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(datastore, RESOURCE7, 0, record->value2));
+    }
+}
+
+TEST(DatastoreTest, test_set_from_set_callback) {
+    // test that another value can be written to the datastore by the callback
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_UINT32, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE7, datastore_create_resource(DATASTORE_TYPE_UINT32, 1)));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, 100));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE7, 0, 200));
+
+    detail::CallbackRecord record;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, RESOURCE0, detail::callback_with_set, &record));
+    record.value1 = 0;
+    record.value2 = 1023;  // resource2 should be set to this
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, 42));
+
+    EXPECT_EQ(1, record.counter);
+    EXPECT_EQ(ds, record.last.datastore);
+    EXPECT_EQ(RESOURCE0, record.last.resource_id);
+    EXPECT_EQ(0, record.last.instance_id);
+    EXPECT_EQ(&record, record.last.context);
+
+    uint32_t value1 = 0;
+    uint32_t value2 = 0;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE0, 0, &value1));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_uint32(ds, RESOURCE7, 0, &value2));
+
+    EXPECT_EQ(42, value1);
+    EXPECT_EQ(1023, value2);
+    EXPECT_EQ(record.value2, value2);
+
+    datastore_free(&ds);
 }
 
 TEST(DatastoreTest, test_get_number_of_instances) {
