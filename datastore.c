@@ -967,7 +967,7 @@ datastore_status_t datastore_dump(const datastore_t * datastore)
                 {
                     char value[256] = "";
                     err = _to_string(datastore, id, instance, value, 256);
-                    platform_info("%2d %-40s %d %s", id, private->index_rows[id].name, instance, value);
+                    platform_info("%2d %-40s %d %s [%d]", id, private->index_rows[id].name, instance, value, private->index_rows[id].size);
                 }
                 if (err != DATASTORE_STATUS_OK)
                 {
