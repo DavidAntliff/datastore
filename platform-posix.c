@@ -22,32 +22,39 @@
  * SOFTWARE.
  */
 
-#ifndef PLATFORM_POSIX_H
-#define PLATFORM_POSIX_H
+#include <stdio.h>
+#include <fcntl.h>   // For O_* constants
 
-#include <semaphore.h>
+#include "platform-posix.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define platform_error(f, ...)   do { fprintf(stdout /*stderr*/, f"\n", ##__VA_ARGS__); } while (0)
-#define platform_warning(f, ...) do { fprintf(stdout, f"\n", ##__VA_ARGS__); } while (0)
-#define platform_info(f, ...)    do { fprintf(stdout, f"\n", ##__VA_ARGS__); } while (0)
-#define platform_debug(f, ...)   do { /*fprintf(stdout, f"\n", ##__VA_ARGS__);*/ } while (0)
-#define platform_hexdump(P, S)
-
-typedef sem_t * platform_semaphore_t;
-
-sem_t * platform_semaphore_create(void);
-void platform_semaphore_delete(sem_t * sem);
-void platform_semaphore_take(sem_t * sem);
-void platform_semaphore_give(sem_t * sem);
-
-
-#ifdef __cplusplus
+sem_t * platform_semaphore_create(void)
+{
+    sem_t * sem = sem_open("/datastore", O_CREAT /* | O_EXCL*/, 0644, 1);
+    if (sem == SEM_FAILED)
+    {
+        perror("sem_open");
+    }
+    return sem;
 }
-#endif
 
-#endif // PLATFORM_POSIX_H
+void platform_semaphore_delete(sem_t * sem)
+{
+    sem_close(sem);
+    sem_unlink("/datastore");
+}
 
+void platform_semaphore_take(sem_t * sem)
+{
+    if (sem_wait(sem) != 0)
+    {
+        perror("sem_wait");
+    }
+}
+
+void platform_semaphore_give(sem_t * sem)
+{
+    if (sem_post(sem) != 0)
+    {
+        perror("sem_post");
+    }
+}

@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-#include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 #include <assert.h>
 
 #include "datastore.h"
@@ -210,6 +210,7 @@ static datastore_status_t _add_resource(const datastore_t * datastore, datastore
                                     platform_error("realloc failed");
                                     err = DATASTORE_STATUS_ERROR_OUT_OF_MEMORY;
                                     free(data);
+                                    platform_semaphore_give(private->semaphore);
                                     goto out;
                                 }
                             }
@@ -967,7 +968,7 @@ datastore_status_t datastore_dump(const datastore_t * datastore)
                 {
                     char value[256] = "";
                     err = _to_string(datastore, id, instance, value, 256);
-                    platform_info("%2d %-40s %d %s [%d]", id, private->index_rows[id].name, instance, value, private->index_rows[id].size);
+                    platform_info("%2d %-40s %d %s [%zu]", id, private->index_rows[id].name, instance, value, private->index_rows[id].size);
                 }
                 if (err != DATASTORE_STATUS_OK)
                 {
