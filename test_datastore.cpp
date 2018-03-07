@@ -82,6 +82,21 @@ TEST(DatastoreTest, add_managed_string_with_wrong_function) {
     datastore_free(&ds);
 }
 
+TEST(DatastoreTest, add_duplicate_resource0) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_INT32, 1));
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, add_duplicate_resource1) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE1, DATASTORE_TYPE_UINT32, 1));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_add_fixed_length_resource(ds, RESOURCE1, DATASTORE_TYPE_INT32, 1));
+    datastore_free(&ds);
+}
+
 TEST(DatastoreTest, managed_scalar_uint32_defaults_to_zero) {
     datastore_t * ds = datastore_create();
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, RESOURCE0, DATASTORE_TYPE_UINT32, 1));

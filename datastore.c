@@ -215,20 +215,28 @@ static datastore_status_t _add_resource(const datastore_t * datastore, datastore
                                 }
                             }
 
-                            // TODO: check for overwrite
-                            platform_debug("register id %d, data %p", resource_id, data);
-                            private->index_rows[resource_id].id = resource_id;
-                            private->index_rows[resource_id].data = data;
-                            private->index_rows[resource_id].name = NULL;
-                            private->index_rows[resource_id].num_instances = num_instances;
-                            private->index_rows[resource_id].size = size;
-                            private->index_rows[resource_id].type = type;
-                            private->index_rows[resource_id].managed = managed;
-                            private->index_rows[resource_id].callbacks = NULL;
+                            // check for overwrite of existing resource
+                            if (private->index_rows[resource_id].data == NULL)
+                            {
+                                platform_debug("register id %d, data %p", resource_id, data);
+                                private->index_rows[resource_id].id = resource_id;
+                                private->index_rows[resource_id].data = data;
+                                private->index_rows[resource_id].name = NULL;
+                                private->index_rows[resource_id].num_instances = num_instances;
+                                private->index_rows[resource_id].size = size;
+                                private->index_rows[resource_id].type = type;
+                                private->index_rows[resource_id].managed = managed;
+                                private->index_rows[resource_id].callbacks = NULL;
+                                err = DATASTORE_STATUS_OK;
+                            }
+                            else
+                            {
+                                err = DATASTORE_STATUS_ERROR_INVALID_ID;
+                                platform_error("resource already defined");
+                            }
 
+                          out:
                             platform_semaphore_give(private->semaphore);
-
-                            err = DATASTORE_STATUS_OK;
                         }
                         else
                         {
@@ -265,7 +273,6 @@ static datastore_status_t _add_resource(const datastore_t * datastore, datastore
         err = DATASTORE_STATUS_ERROR_NULL_POINTER;
         platform_error("datastore is NULL");
     }
-out:
     return err;
 }
 
@@ -637,7 +644,6 @@ static datastore_status_t _get_value(const datastore_t * datastore, datastore_re
                             }
                             platform_semaphore_give(private->semaphore);
 
-                            // TODO: call any registered callbacks with new value
                             err = DATASTORE_STATUS_OK;
                         }
                         else
