@@ -118,6 +118,9 @@ uint32_t datastore_num_instances(const datastore_t * datastore, datastore_resour
 datastore_status_t datastore_increment(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance);
 datastore_status_t datastore_dump(const datastore_t * datastore);
 
+typedef uint64_t datastore_age_t;
+#define DATASTORE_INVALID_AGE UINT64_MAX
+datastore_status_t datastore_get_age(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, datastore_age_t * age_us);
 
 #ifdef __cplusplus
 }

@@ -28,6 +28,8 @@
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/time.h>
+#include <inttypes.h>
 
 #include "datastore.h"
 
@@ -58,6 +60,7 @@ typedef struct
     size_t size;   // per instance size
     bool managed;  // data allocation is managed by API
     callback_entry_t * callbacks;
+    struct timeval timestamp;
 } index_row_t;
 
 typedef struct
@@ -227,6 +230,8 @@ static datastore_status_t _add_resource(const datastore_t * datastore, datastore
                                 private->index_rows[resource_id].type = type;
                                 private->index_rows[resource_id].managed = managed;
                                 private->index_rows[resource_id].callbacks = NULL;
+                                private->index_rows[resource_id].timestamp.tv_sec = 0;
+                                private->index_rows[resource_id].timestamp.tv_usec = 0;
                                 err = DATASTORE_STATUS_OK;
                             }
                             else
@@ -461,6 +466,65 @@ const char * datastore_get_name(const datastore_t * datastore, datastore_resourc
     return name;
 }
 
+datastore_status_t datastore_get_age(const datastore_t * datastore, datastore_resource_id_t resource_id, datastore_instance_id_t instance, datastore_age_t * age_us)
+{
+    datastore_status_t err = DATASTORE_STATUS_UNKNOWN;
+    if (age_us != NULL)
+    {
+        if (datastore != NULL)
+        {
+            private_t * private = (private_t *)datastore->private_data;
+            if (private != NULL)
+            {
+                if (resource_id >= 0 && resource_id < private->index_size / sizeof(index_row_t))
+                {
+                    if (instance >= 0 && instance < private->index_rows[resource_id].num_instances)
+                    {
+                        struct timeval * timestamp = &private->index_rows[resource_id].timestamp;
+                        if (timestamp->tv_sec == 0 && timestamp->tv_usec == 0)
+                        {
+                            *age_us = DATASTORE_INVALID_AGE;
+                        }
+                        else
+                        {
+                            struct timeval now;
+                            gettimeofday(&now, NULL);
+                            *age_us = (now.tv_sec * 1000000 + now.tv_usec) - (timestamp->tv_sec * 1000000 + timestamp->tv_usec);
+                        }
+                        err = DATASTORE_STATUS_OK;
+                    }
+                    else
+                    {
+                        platform_error("instance %d is invalid", instance);
+                        err = DATASTORE_STATUS_ERROR_INVALID_INSTANCE;
+                    }
+                }
+                else
+                {
+                    platform_error("id %d is invalid", resource_id);
+                    err = DATASTORE_STATUS_ERROR_INVALID_ID;
+                }
+            }
+            else
+            {
+                platform_error("private is NULL");
+                err = DATASTORE_STATUS_ERROR_NULL_POINTER;
+            }
+        }
+        else
+        {
+            platform_error("datastore is NULL");
+            err = DATASTORE_STATUS_ERROR_NULL_POINTER;
+        }
+    }
+    else
+    {
+        platform_error("age_us is NULL");
+        err = DATASTORE_STATUS_ERROR_NULL_POINTER;
+    }
+    return err;
+}
+
 static void _set_handler(uint8_t * src, uint8_t * dest, size_t len)
 {
     memcpy(dest, src, len);
@@ -494,6 +558,7 @@ static datastore_status_t _set_value(const datastore_t * datastore, datastore_re
 
                                 platform_semaphore_take(private->semaphore);
                                 _set_handler((uint8_t *)value, pdest, private->index_rows[id].size);
+                                gettimeofday(&private->index_rows[id].timestamp, NULL);
                                 platform_hexdump(pdest, private->index_rows[id].size);
                                 platform_semaphore_give(private->semaphore);
 
@@ -974,7 +1039,16 @@ datastore_status_t datastore_dump(const datastore_t * datastore)
                 {
                     char value[256] = "";
                     err = _to_string(datastore, id, instance, value, 256);
-                    platform_info("%2d %-40s %d %s [%zu]", id, private->index_rows[id].name, instance, value, private->index_rows[id].size);
+                    datastore_age_t age = 0;
+                    datastore_get_age(datastore, id, instance, &age);
+                    if (age == DATASTORE_INVALID_AGE)
+                    {
+                        platform_info("%2d %-40s %3d %4zu []", id, private->index_rows[id].name, instance, private->index_rows[id].size);
+                    }
+                    else
+                    {
+                        platform_info("%2d %-40s %3d %4zu [%s] (%"PRIu64")", id, private->index_rows[id].name, instance, private->index_rows[id].size, value, age);
+                    }
                 }
                 if (err != DATASTORE_STATUS_OK)
                 {

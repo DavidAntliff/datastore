@@ -1211,3 +1211,56 @@ TEST(DatastoreTest, test_get_as_string_truncation) {
 
     datastore_free(&ds);
 }
+
+TEST(DatastoreTest, test_get_default_age) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_BOOL, 3)));
+
+    datastore_age_t age_us = 0;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_age(ds, RESOURCE0, 0, &age_us)); EXPECT_EQ(DATASTORE_INVALID_AGE, age_us);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_age(ds, RESOURCE0, 1, &age_us)); EXPECT_EQ(DATASTORE_INVALID_AGE, age_us);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_age(ds, RESOURCE0, 2, &age_us)); EXPECT_EQ(DATASTORE_INVALID_AGE, age_us);
+    datastore_free(&ds);
+}
+
+#define AGE_THRESHOLD 100000   // expect "set" to return within 10th of a second
+
+TEST(DatastoreTest, test_get_age_after_set) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_BOOL, 3)));
+
+    datastore_age_t age_us = 0;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE0, 0, true));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_age(ds, RESOURCE0, 0, &age_us)); EXPECT_TRUE(age_us < AGE_THRESHOLD);
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_get_age_after_delay) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_BOOL, 3)));
+
+    datastore_age_t age_us = 0;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE0, 0, true));
+    usleep(1000000);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_age(ds, RESOURCE0, 0, &age_us)); EXPECT_TRUE((age_us > 1000000) && (age_us < 1000000 + AGE_THRESHOLD));
+    usleep(1000000);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_age(ds, RESOURCE0, 0, &age_us)); EXPECT_TRUE((age_us > 2000000) && (age_us < 2000000 + AGE_THRESHOLD));
+    usleep(1000000);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE0, 0, true));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_age(ds, RESOURCE0, 0, &age_us)); EXPECT_TRUE(age_us < AGE_THRESHOLD);
+
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_get_age_invalid) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_BOOL, 3)));
+
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER,     datastore_get_age(ds, RESOURCE0, 0, NULL));
+    datastore_age_t age_us = 0;
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER,     datastore_get_age(NULL, RESOURCE0, 0, &age_us));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID,       datastore_get_age(ds, RESOURCE1, 0, &age_us));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_get_age(ds, RESOURCE0, 4, &age_us));
+    datastore_free(&ds);
+}
+
