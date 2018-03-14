@@ -60,7 +60,7 @@ typedef struct
     size_t size;   // per instance size
     bool managed;  // data allocation is managed by API
     callback_entry_t * callbacks;
-    struct timeval timestamp;
+    uint64_t timestamp;
 } index_row_t;
 
 typedef struct
@@ -230,8 +230,7 @@ static datastore_status_t _add_resource(const datastore_t * datastore, datastore
                                 private->index_rows[resource_id].type = type;
                                 private->index_rows[resource_id].managed = managed;
                                 private->index_rows[resource_id].callbacks = NULL;
-                                private->index_rows[resource_id].timestamp.tv_sec = 0;
-                                private->index_rows[resource_id].timestamp.tv_usec = 0;
+                                private->index_rows[resource_id].timestamp = UINT64_MAX;
                                 err = DATASTORE_STATUS_OK;
                             }
                             else
@@ -480,16 +479,13 @@ datastore_status_t datastore_get_age(const datastore_t * datastore, datastore_re
                 {
                     if (instance >= 0 && instance < private->index_rows[resource_id].num_instances)
                     {
-                        struct timeval * timestamp = &private->index_rows[resource_id].timestamp;
-                        if (timestamp->tv_sec == 0 && timestamp->tv_usec == 0)
+                        if (private->index_rows[resource_id].timestamp == UINT64_MAX)
                         {
                             *age_us = DATASTORE_INVALID_AGE;
                         }
                         else
                         {
-                            struct timeval now;
-                            gettimeofday(&now, NULL);
-                            *age_us = (now.tv_sec * 1000000 + now.tv_usec) - (timestamp->tv_sec * 1000000 + timestamp->tv_usec);
+                            *age_us = platform_get_time() - private->index_rows[resource_id].timestamp;
                         }
                         err = DATASTORE_STATUS_OK;
                     }
@@ -558,7 +554,7 @@ static datastore_status_t _set_value(const datastore_t * datastore, datastore_re
 
                                 platform_semaphore_take(private->semaphore);
                                 _set_handler((uint8_t *)value, pdest, private->index_rows[id].size);
-                                gettimeofday(&private->index_rows[id].timestamp, NULL);
+                                private->index_rows[id].timestamp = platform_get_time();
                                 platform_hexdump(pdest, private->index_rows[id].size);
                                 platform_semaphore_give(private->semaphore);
 

@@ -26,6 +26,7 @@
 #define PLATFORM_POSIX_H
 
 #include <semaphore.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +45,7 @@ void platform_semaphore_delete(sem_t * sem);
 void platform_semaphore_take(sem_t * sem);
 void platform_semaphore_give(sem_t * sem);
 
+uint64_t platform_get_time(void);
 
 #ifdef __cplusplus
 }

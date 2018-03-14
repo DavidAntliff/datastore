@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <fcntl.h>   // For O_* constants
+#include <sys/time.h>
 
 #include "platform-posix.h"
 
@@ -57,4 +58,11 @@ void platform_semaphore_give(sem_t * sem)
     {
         perror("sem_post");
     }
+}
+
+uint64_t platform_get_time(void)
+{
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    return now.tv_sec * 1000000 + now.tv_usec;
 }

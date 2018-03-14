@@ -28,6 +28,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,6 +47,8 @@ typedef SemaphoreHandle_t platform_semaphore_t;
 #define platform_semaphore_delete(S)  vSemaphoreDelete(S)
 #define platform_semaphore_take(S)    xSemaphoreTake(S, portMAX_DELAY)
 #define platform_semaphore_give(S)    xSemaphoreGive(S)
+
+#define platform_get_time() esp_timer_get_time()
 
 #ifdef __cplusplus
 }
