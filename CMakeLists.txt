@@ -13,7 +13,7 @@ set(CMAKE_BUILD_TYPE=Debug)
 set(LIBS gtest_main gtest pthread)
 
 include_directories(${CMAKE_SOURCE_DIR}/googletest/include)
-add_executable(test_datastore datastore.c test_datastore.cpp platform-posix.c)
+add_executable(test_datastore test_datastore.cpp datastore.c platform-posix.c convert_string.c)
 target_link_libraries(test_datastore ${LIBS})
 
 # Custom target to run the tests

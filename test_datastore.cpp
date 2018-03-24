@@ -1212,6 +1212,243 @@ TEST(DatastoreTest, test_get_as_string_truncation) {
     datastore_free(&ds);
 }
 
+namespace detail {
+    template <typename T>
+    datastore_status_t datastore_get(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, T * value);
+
+    template <>
+    datastore_status_t datastore_get<>(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, bool * value) {
+        return datastore_get_bool(datastore, id, instance, value);
+    }
+
+    template <>
+    datastore_status_t datastore_get<>(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, uint8_t * value) {
+        return datastore_get_uint8(datastore, id, instance, value);
+    }
+
+    template <>
+    datastore_status_t datastore_get<>(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, uint32_t * value) {
+        return datastore_get_uint32(datastore, id, instance, value);
+    }
+
+    template <>
+    datastore_status_t datastore_get<>(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, int8_t * value) {
+        return datastore_get_int8(datastore, id, instance, value);
+    }
+
+    template <>
+    datastore_status_t datastore_get<>(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, int32_t * value) {
+        return datastore_get_int32(datastore, id, instance, value);
+    }
+
+    template <>
+    datastore_status_t datastore_get<>(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, float * value) {
+        return datastore_get_float(datastore, id, instance, value);
+    }
+
+    template <>
+    datastore_status_t datastore_get<>(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, double * value) {
+        return datastore_get_double(datastore, id, instance, value);
+    }
+
+    template <typename T>
+    static void as_string_test(datastore_status_t expected_status,
+                               datastore_t * ds,
+                               datastore_resource_id_t resource_id,
+                               datastore_instance_id_t instance_id,
+                               const char * string,
+                               T expected_value=T(0)) {
+        datastore_status_t actual_status = datastore_set_as_string(ds, resource_id, instance_id, string);
+        EXPECT_EQ(expected_status, actual_status);
+        if (actual_status == DATASTORE_STATUS_OK) {
+            T actual_value = T(0);
+            EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get<T>(ds, resource_id, instance_id, &actual_value));
+            EXPECT_EQ(expected_value, actual_value);
+        }
+    }
+
+    static void string_as_string_test(datastore_status_t expected_status,
+                                      datastore_t * ds,
+                                      datastore_resource_id_t resource_id,
+                                      datastore_instance_id_t instance_id,
+                                      const char * string,
+                                      const char * expected_value=NULL) {
+        datastore_status_t actual_status = datastore_set_as_string(ds, resource_id, instance_id, string);
+        EXPECT_EQ(expected_status, actual_status);
+        if (actual_status == DATASTORE_STATUS_OK) {
+            char actual_value[1024] = "";
+            EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_string(ds, resource_id, instance_id, actual_value, 1024));
+            EXPECT_STREQ(expected_value, actual_value);
+        }
+    }
+}
+
+TEST(DatastoreTest, test_set_as_string_bool) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_BOOL, 1)));
+
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "true", true); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "t", true); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "T", true); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "True", true); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "TRUE", true); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "1", true); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "103", true); }
+
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "false", false); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "f", false); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "F", false); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "False", false); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "FALSE", false); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0", false); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "-0", false); }
+
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "-77"); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "ff"); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "Talse"); }
+    { SCOPED_TRACE(""); detail::as_string_test<bool>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, ""); }
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_set_as_string_uint8) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_UINT8, 1)));
+
+    { SCOPED_TRACE(""); detail::as_string_test<uint8_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0", 0); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint8_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "1", 1); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint8_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "255", 255); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint8_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "1.1", 1); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint8_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0.9", 0); }
+
+    { SCOPED_TRACE(""); detail::as_string_test<uint8_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "-77"); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint8_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "abc"); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint8_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "256"); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint8_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, ""); }
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_set_as_string_uint32) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_UINT32, 1)));
+
+    { SCOPED_TRACE(""); detail::as_string_test<uint32_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0", 0); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint32_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "1", 1); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint32_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "100", 100); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint32_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "4294967295", 4294967295U); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint32_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "1.1", 1); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint32_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0.9", 0); }
+
+    { SCOPED_TRACE(""); detail::as_string_test<uint32_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "-77"); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint32_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "abc"); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint32_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "4294967296"); }
+    { SCOPED_TRACE(""); detail::as_string_test<uint32_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, ""); }
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_set_as_string_int8) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_INT8, 1)));
+
+    { SCOPED_TRACE(""); detail::as_string_test<int8_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0", 0); }
+    { SCOPED_TRACE(""); detail::as_string_test<int8_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "1", 1); }
+    { SCOPED_TRACE(""); detail::as_string_test<int8_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "-128", -128); }
+    { SCOPED_TRACE(""); detail::as_string_test<int8_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "127", 127); }
+    { SCOPED_TRACE(""); detail::as_string_test<int8_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "1.1", 1); }
+    { SCOPED_TRACE(""); detail::as_string_test<int8_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0.9", 0); }
+
+    { SCOPED_TRACE(""); detail::as_string_test<int8_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "abc"); }
+    { SCOPED_TRACE(""); detail::as_string_test<int8_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "-129"); }
+    { SCOPED_TRACE(""); detail::as_string_test<int8_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "128"); }
+    { SCOPED_TRACE(""); detail::as_string_test<int8_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, ""); }
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_set_as_string_int32) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_INT32, 1)));
+
+    { SCOPED_TRACE(""); detail::as_string_test<int32_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0", 0); }
+    { SCOPED_TRACE(""); detail::as_string_test<int32_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "1", 1); }
+    { SCOPED_TRACE(""); detail::as_string_test<int32_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "-2147483648", -2147483648); }
+    { SCOPED_TRACE(""); detail::as_string_test<int32_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "2147483647", 2147483647); }
+    { SCOPED_TRACE(""); detail::as_string_test<int32_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "1.1", 1); }
+    { SCOPED_TRACE(""); detail::as_string_test<int32_t>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0.9", 0); }
+
+    { SCOPED_TRACE(""); detail::as_string_test<int32_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "abc"); }
+    { SCOPED_TRACE(""); detail::as_string_test<int32_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "-2147483649"); }
+    { SCOPED_TRACE(""); detail::as_string_test<int32_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "2147483648"); }
+    { SCOPED_TRACE(""); detail::as_string_test<int32_t>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, ""); }
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_set_as_string_float) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_FLOAT, 1)));
+
+    { SCOPED_TRACE(""); detail::as_string_test<float>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0", 0.0f); }
+    { SCOPED_TRACE(""); detail::as_string_test<float>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0.0", 0.0f); }
+    { SCOPED_TRACE(""); detail::as_string_test<float>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "1.0", 1.0f); }
+    { SCOPED_TRACE(""); detail::as_string_test<float>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "-2.125", -2.125f); }
+    { SCOPED_TRACE(""); detail::as_string_test<float>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "5.75", 5.75f); }
+    { SCOPED_TRACE(""); detail::as_string_test<float>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "1.1", 1.1f); }
+    { SCOPED_TRACE(""); detail::as_string_test<float>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0.9e17", 0.9e17f); }
+
+    { SCOPED_TRACE(""); detail::as_string_test<float>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "abc"); }
+    { SCOPED_TRACE(""); detail::as_string_test<float>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "true"); }
+    { SCOPED_TRACE(""); detail::as_string_test<float>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "1e1000"); }
+    { SCOPED_TRACE(""); detail::as_string_test<float>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, ""); }
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_set_as_string_double) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_DOUBLE, 1)));
+
+    { SCOPED_TRACE(""); detail::as_string_test<double>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0", 0.0); }
+    { SCOPED_TRACE(""); detail::as_string_test<double>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0.0", 0.0); }
+    { SCOPED_TRACE(""); detail::as_string_test<double>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "1.0", 1.0); }
+    { SCOPED_TRACE(""); detail::as_string_test<double>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "-2.125", -2.125); }
+    { SCOPED_TRACE(""); detail::as_string_test<double>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "5.75", 5.75); }
+    { SCOPED_TRACE(""); detail::as_string_test<double>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "1.1", 1.1); }
+    { SCOPED_TRACE(""); detail::as_string_test<double>(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0.9e170", 0.9e170); }
+
+    { SCOPED_TRACE(""); detail::as_string_test<double>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "abc"); }
+    { SCOPED_TRACE(""); detail::as_string_test<double>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "true"); }
+    { SCOPED_TRACE(""); detail::as_string_test<double>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, "1e1000"); }
+    { SCOPED_TRACE(""); detail::as_string_test<double>(DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION, ds, RESOURCE0, 0, ""); }
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_set_as_string_string) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_string_resource(8, 1)));
+
+    { SCOPED_TRACE(""); detail::string_as_string_test(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "0", "0"); }
+    { SCOPED_TRACE(""); detail::string_as_string_test(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "abcdefg", "abcdefg"); }
+    { SCOPED_TRACE(""); detail::string_as_string_test(DATASTORE_STATUS_OK, ds, RESOURCE0, 0, "", ""); }
+
+    { SCOPED_TRACE(""); detail::string_as_string_test(DATASTORE_STATUS_ERROR_TOO_LARGE, ds, RESOURCE0, 0, "1234567890"); }
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_set_as_string_invalid) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_BOOL, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE1, datastore_create_resource(DATASTORE_TYPE_UINT8, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE2, datastore_create_resource(DATASTORE_TYPE_UINT32, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE3, datastore_create_resource(DATASTORE_TYPE_INT8, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE4, datastore_create_resource(DATASTORE_TYPE_INT32, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE5, datastore_create_resource(DATASTORE_TYPE_FLOAT, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE6, datastore_create_resource(DATASTORE_TYPE_DOUBLE, 1)));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE7, datastore_create_string_resource(256, 1)));
+
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_set_as_string(NULL, RESOURCE0, 0, "true"));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_set_as_string(ds, RESOURCE0, 0, NULL));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_set_as_string(ds, 100, 0, "true"));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_set_as_string(ds, RESOURCE0, 1, "false"));
+    datastore_free(&ds);
+}
+
 TEST(DatastoreTest, test_get_default_age) {
     datastore_t * ds = datastore_create();
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_BOOL, 3)));

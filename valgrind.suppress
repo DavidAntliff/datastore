@@ -57,3 +57,28 @@
    fun:__snprintf_chk
    ...
 }
+
+# strtof
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:__Balloc_D2A
+   ...
+   fun:__strtodg
+   fun:strtof_l
+   ...
+}
+
+# strtod
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:__Balloc_D2A
+   ...
+   fun:strtod_l
+   ...
+}

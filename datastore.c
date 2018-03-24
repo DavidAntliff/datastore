@@ -32,6 +32,7 @@
 #include <inttypes.h>
 
 #include "datastore.h"
+#include "string_to.h"
 
 #ifdef ESP_PLATFORM
 #  include "platform-esp32.h"
@@ -988,6 +989,200 @@ datastore_status_t datastore_get_as_string(const datastore_t * datastore, datast
                 if (instance >= 0 && instance < private->index_rows[id].num_instances)
                 {
                     err = _to_string(datastore, id, instance, buffer, buffer_size);
+                    if (err != DATASTORE_STATUS_OK)
+                    {
+                        platform_error("Error %d", err);
+                    }
+
+                }
+                else
+                {
+                    platform_error("instance %d is invalid", instance);
+                    err = DATASTORE_STATUS_ERROR_INVALID_INSTANCE;
+                }
+            }
+            else
+            {
+                platform_error("id %d is invalid", id);
+                err = DATASTORE_STATUS_ERROR_INVALID_ID;
+            }
+        }
+        else
+        {
+            platform_error("private is NULL");
+            err = DATASTORE_STATUS_ERROR_NULL_POINTER;
+        }
+    }
+    else
+    {
+        platform_error("datastore is NULL");
+        err = DATASTORE_STATUS_ERROR_NULL_POINTER;
+    }
+    return err;
+}
+
+datastore_status_t _from_string(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, const char * buffer)
+{
+    // buffer better be null-terminated...
+
+    datastore_status_t err = DATASTORE_STATUS_UNKNOWN;
+    if (datastore != NULL)
+    {
+        private_t * private = (private_t *)datastore->private_data;
+        if (private != NULL)
+        {
+            if (buffer != NULL)
+            {
+                if (id >= 0 && id < private->index_size / sizeof(index_row_t))
+                {
+                    switch (private->index_rows[id].type)
+                    {
+                    case DATASTORE_TYPE_BOOL:
+                    {
+                        bool value;
+                        if (string_to_bool(buffer, &value))
+                        {
+                            err = datastore_set_bool(datastore, id, instance, value);
+                        }
+                        else
+                        {
+                            platform_error("invalid string \'%s\' for bool", buffer);
+                            err = DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION;
+                        }
+                        break;
+                    }
+                    case DATASTORE_TYPE_UINT8:
+                    {
+                        uint8_t value = 0;
+                        if (string_to_uint8(buffer, &value))
+                        {
+                            err = datastore_set_uint8(datastore, id, instance, value);
+                        }
+                        else
+                        {
+                            platform_error("invalid string \'%s\' for uint8", buffer);
+                            err = DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION;
+                        }
+                        break;
+                    }
+                    case DATASTORE_TYPE_UINT32:
+                    {
+                        uint32_t value = 0;
+                        if (string_to_uint32(buffer, &value))
+                        {
+                            err = datastore_set_uint32(datastore, id, instance, value);
+                        }
+                        else
+                        {
+                            platform_error("invalid string \'%s\' for uint32", buffer);
+                            err = DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION;
+                        }
+                        break;
+                    }
+                    case DATASTORE_TYPE_INT8:
+                    {
+                        int8_t value = 0;
+                        if (string_to_int8(buffer, &value))
+                        {
+                            err = datastore_set_int8(datastore, id, instance, value);
+                        }
+                        else
+                        {
+                            platform_error("invalid string \'%s\' for int8", buffer);
+                            err = DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION;
+                        }
+                        break;
+                    }
+                    case DATASTORE_TYPE_INT32:
+                    {
+                        int32_t value = 0;
+                        if (string_to_int32(buffer, &value))
+                        {
+                            err = datastore_set_int32(datastore, id, instance, value);
+                        }
+                        else
+                        {
+                            platform_error("invalid string \'%s\' for int32", buffer);
+                            err = DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION;
+                        }
+                        break;
+                    }
+                    case DATASTORE_TYPE_FLOAT:
+                    {
+                        float value = 0.0f;
+                        if (string_to_float(buffer, &value))
+                        {
+                            err = datastore_set_float(datastore, id, instance, value);
+                        }
+                        else
+                        {
+                            platform_error("invalid string \'%s\' for float", buffer);
+                            err = DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION;                        }
+                        break;
+                    }
+                    case DATASTORE_TYPE_DOUBLE:
+                    {
+                        double value = 0.0;
+                        if (string_to_double(buffer, &value))
+                        {
+                            err = datastore_set_double(datastore, id, instance, value);
+                        }
+                        else
+                        {
+                            platform_error("invalid string \'%s\' for double", buffer);
+                            err = DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION;                        }
+                        break;
+                    }
+                    case DATASTORE_TYPE_STRING:
+                    {
+                        err = datastore_set_string(datastore, id, instance, buffer);
+                        break;
+                    }
+                    default:
+                        platform_error("unhandled type %d", private->index_rows[id].type);
+                        err = DATASTORE_STATUS_ERROR_INVALID_TYPE;
+                        break;
+                    }
+                }
+                else
+                {
+                    platform_error("invalid datastore ID %d", id);
+                    err = DATASTORE_STATUS_ERROR_INVALID_ID;
+                }
+            }
+            else
+            {
+                platform_error("buffer is NULL");
+                err = DATASTORE_STATUS_ERROR_NULL_POINTER;
+            }
+        }
+        else
+        {
+            platform_error("private is NULL");
+            err = DATASTORE_STATUS_ERROR_NULL_POINTER;
+        }
+    }
+    else
+    {
+        platform_error("datastore is NULL");
+        err = DATASTORE_STATUS_ERROR_NULL_POINTER;
+    }
+    return err;
+}
+
+datastore_status_t datastore_set_as_string(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, const char * buffer)
+{
+    datastore_status_t err = DATASTORE_STATUS_UNKNOWN;
+    if (datastore != NULL)
+    {
+        private_t * private = (private_t *)datastore->private_data;
+        if (private != NULL)
+        {
+            if (id >= 0 && id < private->index_size / sizeof(index_row_t))
+            {
+                if (instance >= 0 && instance < private->index_rows[id].num_instances)
+                {
+                    err = _from_string(datastore, id, instance, buffer);
                     if (err != DATASTORE_STATUS_OK)
                     {
                         platform_error("Error %d", err);

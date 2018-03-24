@@ -22,35 +22,23 @@
  * SOFTWARE.
  */
 
-#ifndef PLATFORM_POSIX_H
-#define PLATFORM_POSIX_H
+#ifndef STRING_TO_H
+#define STRING_TO_H
 
-#include <semaphore.h>
 #include <stdint.h>
-#include <stdio.h>
+#include <stdbool.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+bool string_to_bool(const char * in_str, bool * value);
 
-#define platform_error(f, ...)   do { fprintf(stdout /*stderr*/, f"\n", ##__VA_ARGS__); } while (0)
-#define platform_warning(f, ...) do { fprintf(stdout, f"\n", ##__VA_ARGS__); } while (0)
-#define platform_info(f, ...)    do { fprintf(stdout, f"\n", ##__VA_ARGS__); } while (0)
-#define platform_debug(f, ...)   do { /*fprintf(stdout, f"\n", ##__VA_ARGS__);*/ } while (0)
-#define platform_hexdump(P, S)
+bool string_to_uint8(const char * in_str, uint8_t * value);
+bool string_to_uint16(const char * in_str, uint16_t * value);
+bool string_to_uint32(const char * in_str, uint32_t * value);
 
-typedef sem_t * platform_semaphore_t;
+bool string_to_int8(const char * in_str, int8_t * value);
+bool string_to_int16(const char * in_str, int16_t * value);
+bool string_to_int32(const char * in_str, int32_t * value);
 
-sem_t * platform_semaphore_create(void);
-void platform_semaphore_delete(sem_t * sem);
-void platform_semaphore_take(sem_t * sem);
-void platform_semaphore_give(sem_t * sem);
+bool string_to_float(const char * in_str, float * value);
+bool string_to_double(const char * in_str, double * value);
 
-uint64_t platform_get_time(void);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // PLATFORM_POSIX_H
-
+#endif // STRING_TO_H

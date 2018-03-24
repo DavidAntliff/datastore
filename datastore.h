@@ -43,6 +43,7 @@ typedef enum
     DATASTORE_STATUS_ERROR_INVALID_ID,       // a resource ID is invalid
     DATASTORE_STATUS_ERROR_INVALID_INSTANCE, // an instance, or number of instances is invalid
     DATASTORE_STATUS_ERROR_TOO_LARGE,        // data is too large for allocated space
+    DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION,  // string representation is invalid for expected type
 } datastore_status_t;
 
 typedef enum
@@ -111,6 +112,7 @@ datastore_status_t datastore_get_double(const datastore_t * datastore, datastore
 datastore_status_t datastore_get_string(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, char * value, size_t value_size);
 
 datastore_status_t datastore_get_as_string(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, char * buffer, size_t buffer_size);
+datastore_status_t datastore_set_as_string(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, const char * buffer);
 
 datastore_status_t datastore_add_set_callback(const datastore_t * datastore, datastore_resource_id_t id, set_callback callback, void * context);
 
