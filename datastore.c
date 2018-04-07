@@ -1224,6 +1224,7 @@ datastore_status_t datastore_dump(const datastore_t * datastore)
         if (private != NULL)
         {
             err = DATASTORE_STATUS_OK;
+            platform_info("ID NAME                                INSTANCE SIZE [VALUE] (AGE)");
             for (datastore_resource_id_t id = 0; err == DATASTORE_STATUS_OK && id < private->index_size / sizeof(index_row_t); ++id)
             {
                 for (datastore_instance_id_t instance = 0; err == DATASTORE_STATUS_OK && instance < private->index_rows[id].num_instances; ++instance)
@@ -1238,7 +1239,7 @@ datastore_status_t datastore_dump(const datastore_t * datastore)
                     }
                     else
                     {
-                        platform_info("%2d %-40s %3d %4zu [%s] (%"PRIu64")", id, private->index_rows[id].name, instance, private->index_rows[id].size, value, age);
+                        platform_info("%2d %-40s %3d %4zu [%s] (%0.2fs)", id, private->index_rows[id].name, instance, private->index_rows[id].size, value, age / 1000000.0);
                     }
                 }
                 if (err != DATASTORE_STATUS_OK)
