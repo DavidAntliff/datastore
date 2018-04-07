@@ -1501,3 +1501,24 @@ TEST(DatastoreTest, test_get_age_invalid) {
     datastore_free(&ds);
 }
 
+TEST(DatastoreTest, test_get_ram_usage) {
+    datastore_t * ds = datastore_create();
+    size_t expected_usage = 0;
+    EXPECT_EQ(expected_usage, datastore_get_ram_usage(ds));
+
+    // memory is only allocated at the time resources are defined
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_UINT8, 4)));
+    expected_usage += 4 * sizeof(bool);
+    EXPECT_EQ(expected_usage, datastore_get_ram_usage(ds));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE1, datastore_create_resource(DATASTORE_TYPE_INT32, 7)));
+    expected_usage += 7 * sizeof(int32_t);
+    EXPECT_EQ(expected_usage, datastore_get_ram_usage(ds));
+
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE2, datastore_create_string_resource(71, 3)));
+    expected_usage += 71 * 3;
+    EXPECT_EQ(expected_usage, datastore_get_ram_usage(ds));
+
+    datastore_free(&ds);
+}
+

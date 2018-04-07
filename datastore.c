@@ -214,7 +214,6 @@ static datastore_status_t _add_resource(const datastore_t * datastore, datastore
                                     platform_error("realloc failed");
                                     err = DATASTORE_STATUS_ERROR_OUT_OF_MEMORY;
                                     free(data);
-                                    platform_semaphore_give(private->semaphore);
                                     goto out;
                                 }
                             }
@@ -238,6 +237,7 @@ static datastore_status_t _add_resource(const datastore_t * datastore, datastore
                             {
                                 err = DATASTORE_STATUS_ERROR_INVALID_ID;
                                 platform_error("resource already defined");
+                                free(data);
                             }
 
                           out:
@@ -1365,4 +1365,30 @@ datastore_status_t datastore_increment(const datastore_t * datastore, datastore_
         err = DATASTORE_STATUS_ERROR_NULL_POINTER;
     }
     return err;
+}
+
+size_t datastore_get_ram_usage(const datastore_t * datastore)
+{
+    // only stored data, not including overhead
+    uint32_t usage = 0;
+    if (datastore != NULL)
+    {
+        private_t * private = (private_t *)datastore->private_data;
+        if (private != NULL)
+        {
+            for (datastore_resource_id_t id = 0; id < private->index_size / sizeof(index_row_t); ++id)
+            {
+                usage += private->index_rows[id].size * private->index_rows[id].num_instances;
+            }
+        }
+        else
+        {
+            platform_error("private is NULL");
+        }
+    }
+    else
+    {
+        platform_error("datastore is NULL");
+    }
+    return usage;
 }

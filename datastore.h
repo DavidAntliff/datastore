@@ -124,6 +124,8 @@ typedef uint64_t datastore_age_t;
 #define DATASTORE_INVALID_AGE UINT64_MAX
 datastore_status_t datastore_get_age(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, datastore_age_t * age_us);
 
+size_t datastore_get_ram_usage(const datastore_t * datastore);
+
 #ifdef __cplusplus
 }
 #endif
