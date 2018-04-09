@@ -117,6 +117,7 @@ datastore_status_t datastore_set_as_string(const datastore_t * datastore, datast
 datastore_status_t datastore_add_set_callback(const datastore_t * datastore, datastore_resource_id_t id, set_callback callback, void * context);
 
 uint32_t datastore_num_instances(const datastore_t * datastore, datastore_resource_id_t resource_id);
+datastore_status_t datastore_add(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, int64_t addend);
 datastore_status_t datastore_increment(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance);
 datastore_status_t datastore_dump(const datastore_t * datastore);
 

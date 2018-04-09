@@ -1117,7 +1117,8 @@ datastore_status_t _from_string(const datastore_t * datastore, datastore_resourc
                         else
                         {
                             platform_error("invalid string \'%s\' for float", buffer);
-                            err = DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION;                        }
+                            err = DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION;
+                        }
                         break;
                     }
                     case DATASTORE_TYPE_DOUBLE:
@@ -1130,7 +1131,8 @@ datastore_status_t _from_string(const datastore_t * datastore, datastore_resourc
                         else
                         {
                             platform_error("invalid string \'%s\' for double", buffer);
-                            err = DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION;                        }
+                            err = DATASTORE_STATUS_ERROR_INVALID_REPRESENTATION;
+                        }
                         break;
                     }
                     case DATASTORE_TYPE_STRING:
@@ -1262,9 +1264,9 @@ datastore_status_t datastore_dump(const datastore_t * datastore)
     return err;
 }
 
-datastore_status_t datastore_increment(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance)
+datastore_status_t _add(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, int64_t addend)
 {
-    platform_debug("datastore_increment: id %d, instance %d", id, instance);
+    platform_debug("_add: id %d, instance %d", id, instance);
     datastore_status_t err = DATASTORE_STATUS_UNKNOWN;
     if (datastore != NULL)
     {
@@ -1275,70 +1277,74 @@ datastore_status_t datastore_increment(const datastore_t * datastore, datastore_
             {
                 if (/*instance >= 0 &&*/ instance < private->index_rows[id].num_instances)
                 {
-                    switch (private->index_rows[id].type)
+                    // a zero doesn't change anything - no callbacks
+                    if (addend != 0)
                     {
-                        case DATASTORE_TYPE_UINT8:
+                        switch (private->index_rows[id].type)
                         {
-                            uint8_t value = 0;
-                            err = _get_value(datastore, id, instance, &value, sizeof(value), DATASTORE_TYPE_UINT8);
-                            if (err == DATASTORE_STATUS_OK)
+                            case DATASTORE_TYPE_UINT8:
                             {
-                                ++value;
-                                err = _set_value(datastore, id, instance, &value, sizeof(uint8_t), DATASTORE_TYPE_UINT8);
+                                uint8_t value = 0;
+                                err = _get_value(datastore, id, instance, &value, sizeof(value), DATASTORE_TYPE_UINT8);
+                                if (err == DATASTORE_STATUS_OK)
+                                {
+                                    value += addend;
+                                    err = _set_value(datastore, id, instance, &value, sizeof(uint8_t), DATASTORE_TYPE_UINT8);
+                                }
+                                break;
                             }
-                            break;
-                        }
-                        case DATASTORE_TYPE_UINT32:
-                        {
-                            uint32_t value = 0;
-                            err = _get_value(datastore, id, instance, &value, sizeof(value), DATASTORE_TYPE_UINT32);
-                            if (err == DATASTORE_STATUS_OK)
+                            case DATASTORE_TYPE_UINT32:
                             {
-                                ++value;
-                                err = _set_value(datastore, id, instance, &value, sizeof(uint32_t), DATASTORE_TYPE_UINT32);
+                                uint32_t value = 0;
+                                err = _get_value(datastore, id, instance, &value, sizeof(value), DATASTORE_TYPE_UINT32);
+                                if (err == DATASTORE_STATUS_OK)
+                                {
+                                    value += addend;
+                                    err = _set_value(datastore, id, instance, &value, sizeof(uint32_t), DATASTORE_TYPE_UINT32);
+                                }
+                                break;
                             }
-                            break;
-                        }
 
-                        case DATASTORE_TYPE_INT8:
-                        {
-                            uint8_t value = 0;
-                            err = _get_value(datastore, id, instance, &value, sizeof(value), DATASTORE_TYPE_INT8);
-                            if (err == DATASTORE_STATUS_OK)
+                            case DATASTORE_TYPE_INT8:
                             {
-                                ++value;
-                                err = _set_value(datastore, id, instance, &value, sizeof(int8_t), DATASTORE_TYPE_INT8);
+                                uint8_t value = 0;
+                                err = _get_value(datastore, id, instance, &value, sizeof(value), DATASTORE_TYPE_INT8);
+                                if (err == DATASTORE_STATUS_OK)
+                                {
+                                    value += addend;
+                                    err = _set_value(datastore, id, instance, &value, sizeof(int8_t), DATASTORE_TYPE_INT8);
+                                }
+                                break;
                             }
-                            break;
-                        }
-                        case DATASTORE_TYPE_INT32:
-                        {
-                            uint32_t value = 0;
-                            err = _get_value(datastore, id, instance, &value, sizeof(value), DATASTORE_TYPE_INT32);
-                            if (err == DATASTORE_STATUS_OK)
+                            case DATASTORE_TYPE_INT32:
                             {
-                                ++value;
-                                err = _set_value(datastore, id, instance, &value, sizeof(int32_t), DATASTORE_TYPE_INT32);
+                                uint32_t value = 0;
+                                err = _get_value(datastore, id, instance, &value, sizeof(value), DATASTORE_TYPE_INT32);
+                                if (err == DATASTORE_STATUS_OK)
+                                {
+                                    value += addend;
+                                    err = _set_value(datastore, id, instance, &value, sizeof(int32_t), DATASTORE_TYPE_INT32);
+                                }
+                                break;
                             }
-                            break;
-                        }
 
-                        case DATASTORE_TYPE_BOOL:
-                        {
-                            bool value = false;
-                            err = _get_value(datastore, id, instance, &value, sizeof(value), DATASTORE_TYPE_BOOL);
-                            if (err == DATASTORE_STATUS_OK)
+                            case DATASTORE_TYPE_BOOL:
                             {
-                                value = !value;
-                                err = _set_value(datastore, id, instance, &value, sizeof(bool), DATASTORE_TYPE_BOOL);
+                                bool value = false;
+                                err = _get_value(datastore, id, instance, &value, sizeof(value), DATASTORE_TYPE_BOOL);
+                                if (err == DATASTORE_STATUS_OK)
+                                {
+                                    value = !value;
+                                    err = _set_value(datastore, id, instance, &value, sizeof(bool), DATASTORE_TYPE_BOOL);
+                                }
+                                break;
                             }
-                            break;
-                        }
 
-                        default:
-                            platform_error("Cannot increment type %d", private->index_rows[id].type);
-                            err = DATASTORE_STATUS_ERROR_INVALID_TYPE;
-                            break;
+                            default:
+                                platform_error("Cannot increment type %d", private->index_rows[id].type);
+                                err = DATASTORE_STATUS_ERROR_INVALID_TYPE;
+                                break;
+                        }
                     }
                 }
                 else
@@ -1365,6 +1371,18 @@ datastore_status_t datastore_increment(const datastore_t * datastore, datastore_
         err = DATASTORE_STATUS_ERROR_NULL_POINTER;
     }
     return err;
+}
+
+datastore_status_t datastore_add(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, int64_t addend)
+{
+    platform_debug("datastore_increment: id %d, instance %d", id, instance);
+    return _add(datastore, id, instance, addend);
+}
+
+datastore_status_t datastore_increment(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance)
+{
+    platform_debug("datastore_increment: id %d, instance %d", id, instance);
+    return _add(datastore, id, instance, 1);
 }
 
 size_t datastore_get_ram_usage(const datastore_t * datastore)
