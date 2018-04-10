@@ -1573,6 +1573,24 @@ TEST(DatastoreTest, test_get_age_after_set) {
     datastore_free(&ds);
 }
 
+TEST(DatastoreTest, test_independent_age_per_instance) {
+    datastore_t * ds = datastore_create();
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_BOOL, 3)));
+
+    datastore_age_t age_us = 0;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE0, 0, true));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE0, 1, true));
+    usleep(1000000);
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_bool(ds, RESOURCE0, 0, true));
+
+    // instance 1 age should not be affected
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_get_age(ds, RESOURCE0, 1, &age_us));
+    EXPECT_GT(age_us, 1000000);
+    EXPECT_LT(age_us, 1000000 + AGE_THRESHOLD);
+
+    datastore_free(&ds);
+}
+
 TEST(DatastoreTest, test_get_age_after_delay) {
     datastore_t * ds = datastore_create();
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_resource(ds, RESOURCE0, datastore_create_resource(DATASTORE_TYPE_BOOL, 3)));

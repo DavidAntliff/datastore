@@ -61,7 +61,7 @@ typedef struct
     size_t size;   // per instance size
     bool managed;  // data allocation is managed by API
     callback_entry_t * callbacks;
-    uint64_t timestamp;
+    uint64_t * timestamps;
 } index_row_t;
 
 typedef struct
@@ -147,6 +147,9 @@ void datastore_free(datastore_t ** datastore)
                         entry = next;
                     }
                 }
+
+                free(private->index_rows[i].timestamps);
+                private->index_rows[i].timestamps = NULL;
             }
             free(private->index_rows);
             private->index_rows = NULL;
@@ -230,7 +233,20 @@ static datastore_status_t _add_resource(const datastore_t * datastore, datastore
                                 private->index_rows[resource_id].type = type;
                                 private->index_rows[resource_id].managed = managed;
                                 private->index_rows[resource_id].callbacks = NULL;
-                                private->index_rows[resource_id].timestamp = UINT64_MAX;
+                                uint64_t * timestamps = malloc(sizeof(*timestamps) * num_instances);
+                                if (!timestamps)
+                                {
+                                    platform_error("realloc failed");
+                                    err = DATASTORE_STATUS_ERROR_OUT_OF_MEMORY;
+                                }
+                                else
+                                {
+                                    for (int i = 0; i < num_instances; ++i)
+                                    {
+                                        timestamps[i] = UINT64_MAX;
+                                    }
+                                }
+                                private->index_rows[resource_id].timestamps = timestamps;
                                 err = DATASTORE_STATUS_OK;
                             }
                             else
@@ -480,13 +496,13 @@ datastore_status_t datastore_get_age(const datastore_t * datastore, datastore_re
                 {
                     if (instance >= 0 && instance < private->index_rows[resource_id].num_instances)
                     {
-                        if (private->index_rows[resource_id].timestamp == UINT64_MAX)
+                        if (private->index_rows[resource_id].timestamps[instance] == UINT64_MAX)
                         {
                             *age_us = DATASTORE_INVALID_AGE;
                         }
                         else
                         {
-                            *age_us = platform_get_time() - private->index_rows[resource_id].timestamp;
+                            *age_us = platform_get_time() - private->index_rows[resource_id].timestamps[instance];
                         }
                         err = DATASTORE_STATUS_OK;
                     }
@@ -555,7 +571,7 @@ static datastore_status_t _set_value(const datastore_t * datastore, datastore_re
 
                                 platform_semaphore_take(private->semaphore);
                                 _set_handler((uint8_t *)value, pdest, private->index_rows[id].size);
-                                private->index_rows[id].timestamp = platform_get_time();
+                                private->index_rows[id].timestamps[instance] = platform_get_time();
                                 platform_hexdump(pdest, private->index_rows[id].size);
                                 platform_semaphore_give(private->semaphore);
 
@@ -1277,7 +1293,8 @@ datastore_status_t _add(const datastore_t * datastore, datastore_resource_id_t i
             {
                 if (/*instance >= 0 &&*/ instance < private->index_rows[id].num_instances)
                 {
-                    // a zero doesn't change anything - no callbacks
+                    // a zero doesn't change anything - no callbacks are invoked
+                    err = DATASTORE_STATUS_OK;
                     if (addend != 0)
                     {
                         switch (private->index_rows[id].type)
