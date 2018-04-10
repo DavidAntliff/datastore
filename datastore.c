@@ -46,7 +46,7 @@
 struct callback_entry_t
 {
     struct callback_entry_t * next;
-    set_callback func;
+    datastore_set_callback func;
     void * context;
 };
 typedef struct callback_entry_t callback_entry_t;
@@ -786,7 +786,7 @@ datastore_status_t datastore_get_string(const datastore_t * datastore, datastore
     return _get_value(datastore, id, instance, value, value_size, DATASTORE_TYPE_STRING);
 }
 
-datastore_status_t datastore_add_set_callback(const datastore_t * datastore, datastore_resource_id_t id, set_callback callback, void * context)
+datastore_status_t datastore_add_set_callback(const datastore_t * datastore, datastore_resource_id_t id, datastore_set_callback callback, void * context)
 {
     datastore_status_t err = DATASTORE_STATUS_UNKNOWN;
     if (datastore != NULL)

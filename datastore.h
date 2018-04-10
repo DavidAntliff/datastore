@@ -71,7 +71,7 @@ typedef struct
 datastore_t * datastore_create(void);
 void datastore_free(datastore_t ** datastore);
 
-typedef void (*set_callback)(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, void * context);
+typedef void (*datastore_set_callback)(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, void * context);
 
 typedef struct
 {
@@ -114,7 +114,7 @@ datastore_status_t datastore_get_string(const datastore_t * datastore, datastore
 datastore_status_t datastore_get_as_string(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, char * buffer, size_t buffer_size);
 datastore_status_t datastore_set_as_string(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, const char * buffer);
 
-datastore_status_t datastore_add_set_callback(const datastore_t * datastore, datastore_resource_id_t id, set_callback callback, void * context);
+datastore_status_t datastore_add_set_callback(const datastore_t * datastore, datastore_resource_id_t id, datastore_set_callback callback, void * context);
 
 uint32_t datastore_num_instances(const datastore_t * datastore, datastore_resource_id_t resource_id);
 datastore_status_t datastore_add(const datastore_t * datastore, datastore_resource_id_t id, datastore_instance_id_t instance, int64_t addend);
