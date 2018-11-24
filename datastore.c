@@ -581,6 +581,7 @@ static datastore_status_t _set_value(const datastore_t * datastore, datastore_re
                                     callback_entry_t * entry = private->index_rows[id].callbacks;
                                     while (entry != NULL)
                                     {
+                                        platform_debug("_set_value: invoke callback function %p for id %d, instance %d", entry->func, id, instance);
                                         entry->func(datastore, id, instance, entry->context);
                                         entry = entry->next;
                                     }
