@@ -51,6 +51,13 @@ struct callback_entry_t
 };
 typedef struct callback_entry_t callback_entry_t;
 
+struct instance_entry_t
+{
+    uint64_t timestamp;
+    callback_entry_t * callbacks;
+};
+typedef struct instance_entry_t instance_entry_t;
+
 typedef struct
 {
     datastore_resource_id_t id;   // not necessary? Keep as a check
@@ -60,8 +67,7 @@ typedef struct
     void * data;   // pointer to first byte of first instance
     size_t size;   // per instance size
     bool managed;  // data allocation is managed by API
-    callback_entry_t * callbacks;
-    uint64_t * timestamps;
+    instance_entry_t * instances;
 } index_row_t;
 
 typedef struct
@@ -134,22 +140,25 @@ void datastore_free(datastore_t ** datastore)
                 }
                 private->index_rows[i].data = NULL;
 
-                free((void *)private->index_rows[i].name);
-                private->index_rows[i].name = NULL;
-
-                if (private->index_rows[i].callbacks != NULL)
+                for (size_t j = 0; j < private->index_rows[i].num_instances; ++j)
                 {
-                    callback_entry_t * entry = private->index_rows[i].callbacks;
-                    while (entry != NULL)
+                    if (private->index_rows[i].instances[j].callbacks != NULL)
                     {
-                        callback_entry_t * next = entry->next;
-                        free(entry);
-                        entry = next;
+                        callback_entry_t * entry = private->index_rows[i].instances[j].callbacks;
+                        while (entry != NULL)
+                        {
+                            callback_entry_t * next = entry->next;
+                            free(entry);
+                            entry = next;
+                        }
                     }
                 }
 
-                free(private->index_rows[i].timestamps);
-                private->index_rows[i].timestamps = NULL;
+                free((void *)private->index_rows[i].name);
+                private->index_rows[i].name = NULL;
+
+                free(private->index_rows[i].instances);
+                private->index_rows[i].instances = NULL;
             }
             free(private->index_rows);
             private->index_rows = NULL;
@@ -232,28 +241,27 @@ static datastore_status_t _add_resource(const datastore_t * datastore, datastore
                                 private->index_rows[resource_id].size = size;
                                 private->index_rows[resource_id].type = type;
                                 private->index_rows[resource_id].managed = managed;
-                                private->index_rows[resource_id].callbacks = NULL;
-                                uint64_t * timestamps = malloc(sizeof(*timestamps) * num_instances);
-                                if (!timestamps)
+
+                                private->index_rows[resource_id].instances = malloc(sizeof(instance_entry_t) * num_instances);
+                                if (private->index_rows[resource_id].instances)
                                 {
-                                    platform_error("realloc failed");
-                                    err = DATASTORE_STATUS_ERROR_OUT_OF_MEMORY;
+                                    for (size_t i = 0; i < num_instances; ++i)
+                                    {
+                                        private->index_rows[resource_id].instances[i].callbacks = NULL;
+                                        private->index_rows[resource_id].instances[i].timestamp = UINT64_MAX;
+                                    }
                                 }
                                 else
                                 {
-                                    for (int i = 0; i < num_instances; ++i)
-                                    {
-                                        timestamps[i] = UINT64_MAX;
-                                    }
+                                    platform_error("malloc failed");
+                                    err = DATASTORE_STATUS_ERROR_OUT_OF_MEMORY;
                                 }
-                                private->index_rows[resource_id].timestamps = timestamps;
                                 err = DATASTORE_STATUS_OK;
                             }
                             else
                             {
                                 err = DATASTORE_STATUS_ERROR_INVALID_ID;
                                 platform_error("resource already defined");
-                                free(data);
                             }
 
                           out:
@@ -496,13 +504,13 @@ datastore_status_t datastore_get_age(const datastore_t * datastore, datastore_re
                 {
                     if (instance >= 0 && instance < private->index_rows[resource_id].num_instances)
                     {
-                        if (private->index_rows[resource_id].timestamps[instance] == UINT64_MAX)
+                        if (private->index_rows[resource_id].instances[instance].timestamp == UINT64_MAX)
                         {
                             *age_us = DATASTORE_INVALID_AGE;
                         }
                         else
                         {
-                            *age_us = platform_get_time() - private->index_rows[resource_id].timestamps[instance];
+                            *age_us = platform_get_time() - private->index_rows[resource_id].instances[instance].timestamp;
                         }
                         err = DATASTORE_STATUS_OK;
                     }
@@ -571,14 +579,14 @@ static datastore_status_t _set_value(const datastore_t * datastore, datastore_re
 
                                 platform_semaphore_take(private->semaphore);
                                 _set_handler((uint8_t *)value, pdest, private->index_rows[id].size);
-                                private->index_rows[id].timestamps[instance] = platform_get_time();
+                                private->index_rows[id].instances[instance].timestamp = platform_get_time();
                                 platform_hexdump(pdest, private->index_rows[id].size);
                                 platform_semaphore_give(private->semaphore);
 
                                 // call any registered callbacks with new value
-                                if (private->index_rows[id].callbacks != NULL)
+                                if (private->index_rows[id].instances[instance].callbacks != NULL)
                                 {
-                                    callback_entry_t * entry = private->index_rows[id].callbacks;
+                                    callback_entry_t * entry = private->index_rows[id].instances[instance].callbacks;
                                     while (entry != NULL)
                                     {
                                         platform_debug("_set_value: invoke callback function %p for id %d, instance %d", entry->func, id, instance);
@@ -803,7 +811,7 @@ datastore_status_t datastore_get_string(const datastore_t * datastore, datastore
     return _get_value(datastore, id, instance, value, value_size, DATASTORE_TYPE_STRING);
 }
 
-datastore_status_t datastore_add_set_callback(const datastore_t * datastore, datastore_resource_id_t id, datastore_set_callback callback, void * context)
+datastore_status_t datastore_add_set_callback(const datastore_t * datastore, datastore_resource_id_t resource_id, datastore_instance_id_t instance_id, datastore_set_callback callback, void * context)
 {
     datastore_status_t err = DATASTORE_STATUS_UNKNOWN;
     if (datastore != NULL)
@@ -811,34 +819,42 @@ datastore_status_t datastore_add_set_callback(const datastore_t * datastore, dat
         private_t * private = (private_t *)datastore->private_data;
         if (private != NULL)
         {
-            if (id >= 0 && id < private->index_size / sizeof(index_row_t))
+            if (resource_id >= 0 && resource_id < private->index_size / sizeof(index_row_t))
             {
-                if (private->index_rows[id].callbacks == NULL)
+                if (instance_id >= 0 && instance_id < private->index_rows[resource_id].num_instances)
                 {
-                    private->index_rows[id].callbacks = malloc(sizeof(*private->index_rows[id].callbacks));
-                    private->index_rows[id].callbacks->next = NULL;
-                    private->index_rows[id].callbacks->func = callback;
-                    private->index_rows[id].callbacks->context = context;
+                    if (private->index_rows[resource_id].instances[instance_id].callbacks == NULL)
+                    {
+                        private->index_rows[resource_id].instances[instance_id].callbacks = malloc(sizeof(*private->index_rows[resource_id].instances[instance_id].callbacks));
+                        private->index_rows[resource_id].instances[instance_id].callbacks->next = NULL;
+                        private->index_rows[resource_id].instances[instance_id].callbacks->func = callback;
+                        private->index_rows[resource_id].instances[instance_id].callbacks->context = context;
+                    }
+                    else
+                    {
+                        // find end of list
+                        callback_entry_t * entry = private->index_rows[resource_id].instances[instance_id].callbacks;
+                        while (entry->next != NULL)
+                        {
+                            entry = entry->next;
+                        }
+
+                        entry->next = malloc(sizeof(*private->index_rows[resource_id].instances[instance_id].callbacks));
+                        entry->next->next = NULL;
+                        entry->next->func = callback;
+                        entry->next->context = context;
+                    }
+                    err = DATASTORE_STATUS_OK;
                 }
                 else
                 {
-                    // find end of list
-                    callback_entry_t * entry = private->index_rows[id].callbacks;
-                    while (entry->next != NULL)
-                    {
-                        entry = entry->next;
-                    }
-
-                    entry->next = malloc(sizeof(*private->index_rows[id].callbacks));
-                    entry->next->next = NULL;
-                    entry->next->func = callback;
-                    entry->next->context = context;
+                    platform_error("_get_value: instance %d is invalid", instance_id);
+                    err = DATASTORE_STATUS_ERROR_INVALID_INSTANCE;
                 }
-                err = DATASTORE_STATUS_OK;
             }
             else
             {
-                platform_error("_get_value: id %d is invalid", id);
+                platform_error("_get_value: resource_id %d is invalid", resource_id);
                 err = DATASTORE_STATUS_ERROR_INVALID_ID;
             }
         }

@@ -711,7 +711,8 @@ TEST(DatastoreTest, test_set_callback) {
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT32, 10));
 
     detail::CallbackRecord record;
-    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, ID, detail::callback, &record));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, ID, 0, detail::callback, &record));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, ID, 5, detail::callback, &record));
 
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, ID, 0, 42));
     uint32_t value = 0;
@@ -738,21 +739,29 @@ TEST(DatastoreTest, test_set_callback) {
 }
 
 TEST(DatastoreTest, test_set_callback_with_null_datastore) {
-    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_set_callback(NULL, 0, detail::callback, NULL));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_set_callback(NULL, 0, 0, detail::callback, NULL));
 }
 
 TEST(DatastoreTest, test_set_callback_with_null_private) {
     datastore_t * ds = datastore_create();
     auto tmp = ds->private_data;
     ds->private_data = NULL;
-    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_set_callback(ds, 0, detail::callback, NULL));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_NULL_POINTER, datastore_add_set_callback(ds, 0, 0, detail::callback, NULL));
     ds->private_data = tmp;
     datastore_free(&ds);
 }
 
 TEST(DatastoreTest, test_set_callback_with_invalid_id) {
     datastore_t * ds = datastore_create();
-    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_add_set_callback(ds, 17, detail::callback, NULL));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_ID, datastore_add_set_callback(ds, 17, 0, detail::callback, NULL));
+    datastore_free(&ds);
+}
+
+TEST(DatastoreTest, test_set_callback_with_invalid_instance) {
+    datastore_t * ds = datastore_create();
+    const datastore_resource_id_t ID = 17;
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT32, 1));
+    EXPECT_EQ(DATASTORE_STATUS_ERROR_INVALID_INSTANCE, datastore_add_set_callback(ds, ID, 1, detail::callback, NULL));
     datastore_free(&ds);
 }
 
@@ -797,9 +806,9 @@ TEST(DatastoreTest, test_set_callback_chain) {
 
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_fixed_length_resource(ds, ID, DATASTORE_TYPE_UINT32, 10));
 
-    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, ID, detail::chained_callback1, &record1));
-    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, ID, detail::chained_callback2, &record2));
-    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, ID, detail::chained_callback3, &record3));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, ID, 0, detail::chained_callback1, &record1));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, ID, 0, detail::chained_callback2, &record2));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, ID, 0, detail::chained_callback3, &record3));
 
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, ID, 0, 42));
 
@@ -853,7 +862,7 @@ TEST(DatastoreTest, test_get_from_set_callback) {
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE7, 0, 200));
 
     detail::CallbackRecord record;
-    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, RESOURCE0, detail::callback_with_get, &record));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, RESOURCE0, 0, detail::callback_with_get, &record));
 
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE0, 0, 42));
 
@@ -900,7 +909,7 @@ TEST(DatastoreTest, test_set_from_set_callback) {
     EXPECT_EQ(DATASTORE_STATUS_OK, datastore_set_uint32(ds, RESOURCE7, 0, 200));
 
     detail::CallbackRecord record;
-    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, RESOURCE0, detail::callback_with_set, &record));
+    EXPECT_EQ(DATASTORE_STATUS_OK, datastore_add_set_callback(ds, RESOURCE0, 0, detail::callback_with_set, &record));
     record.value1 = 0;
     record.value2 = 1023;  // resource2 should be set to this
 

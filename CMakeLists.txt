@@ -8,7 +8,7 @@ string(APPEND CMAKE_C_FLAGS " -std=gnu99")
 string(APPEND CMAKE_C_FLAGS " -g -O0 --coverage")
 string(APPEND CMAKE_EXE_LINKER_FLAGS " --coverage")
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_BUILD_TYPE=Debug)
+set(CMAKE_BUILD_TYPE Debug)
 
 set(LIBS gtest_main gtest pthread)
 
